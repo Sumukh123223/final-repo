@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CleanSpark - Smart BTC Mining Platform. Invest your funds in Bitcoin mining and earn 1% rewards every 15 minutes automatically!">
+    <meta name="keywords" content="CleanSpark, cleanSpark, bitcoin mining, cryptocurrency, BSC, crypto mining, mining platform">
+    <title>CleanSpark - Smart Bitcoin Mining Platform</title>
+    
+    <!-- Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>₿</text></svg>">
+    
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-wrapper">
+                <div class="logo">
+                    <span class="logo-icon">₿</span>
+                    <span class="logo-text">CleanSpark</span>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#buy-tokens">Buy Tokens</a></li>
+                    <li><a href="#company">Company</a></li>
+                    <li><a href="#dashboard">Dashboard</a></li>
+                </ul>
+                <div id="walletButtonContainer">
+                    <!-- Official Reown AppKit Button Component -->
+                    <appkit-button id="appkitButton" style="display: none;"></appkit-button>
+                    <!-- Fallback custom button (shown by default, hidden when AppKit button is ready) -->
+                    <button class="wallet-connect-btn" id="walletConnectBtn" onclick="openWalletModal()">
+                        🔷 Connect Wallet
+                    </button>
+                    <div id="walletInfo" style="display:none; align-items: center; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div style="width: 8px; height: 8px; background: #10b981; border-radius: 50%;"></div>
+                            <span id="walletAddress" style="font-family: 'Courier New', monospace; font-size: 0.9rem; font-weight: 600;"></span>
+                        </div>
+                        <button class="disconnect-btn" onclick="disconnectWallet()">Disconnect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="bitcoin-watermark">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 4rem; left: 10%; top: 20%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 3rem; left: 80%; top: 15%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 2.5rem; left: 20%; top: 60%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 2rem; left: 70%; top: 70%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 1.5rem; left: 5%; top: 50%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 2.5rem; left: 85%; top: 50%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 3.5rem; left: 40%; top: 10%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 2rem; left: 15%; top: 80%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 3rem; left: 60%; top: 25%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 1.5rem; left: 75%; top: 85%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 2.5rem; left: 30%; top: 30%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 2rem; left: 50%; top: 60%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 3rem; left: 90%; top: 30%;">₿</div>
+        <div class="bitcoin-watermark" style="font-size: 1.5rem; left: 25%; top: 90%;">₿</div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        <span class="gradient-text">CleanSpark</span>
+                        <br>Professional Bitcoin Mining Platform
+                    </h1>
+                    <p class="hero-subtitle">
+                        Invest in <strong class="highlight">real Bitcoin mining operations</strong> powered by advanced ASIC hardware. 
+                        Earn <strong class="highlight">1% rewards every 15 minutes</strong> automatically. Secure, transparent, and profitable.
+                    </p>
+                    <div class="hero-buttons">
+                        <button class="btn btn-primary" onclick="document.getElementById('dashboard').scrollIntoView()">
+                            View My Dashboard
+                        </button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('buy-tokens').scrollIntoView({ behavior: 'smooth' })">
+                            Buy Tokens
+                        </button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">₿</div>
+                            <div class="stat-label">Real Mining</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">15m</div>
+                            <div class="stat-label">Reward Cycle</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">1hr</div>
+                            <div class="stat-label">Lock Period</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">$1</div>
+                            <div class="stat-label">Stable Price</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-visual">
+                    <div class="coin-animation">
+                        <div class="coin">₿</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Why Choose CleanSpark?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">₿</div>
+                    <h3>Real Mining Hardware</h3>
+                    <p>We operate actual Bitcoin mining rigs with cutting-edge ASIC hardware. Your investment directly powers real mining operations with measurable hash rates and proven infrastructure.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Automated Rewards</h3>
+                    <p>Earn 1% every 15 minutes automatically. Our smart contract handles all distributions transparently. No manual claiming required - rewards accrue and compound automatically.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Short Lock Period</h3>
+                    <p>Minimal 1-hour lock period for initial setup. After that, withdraw anytime with standard 2% fees. Early exit available with 30% penalty if needed.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>High Performance Mining</h3>
+                    <p>Latest-generation ASIC miners with optimal hash rates. Strategic facility locations with low electricity costs. Optimized for maximum profitability and efficiency.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Global Mining Pools</h3>
+                    <p>Partnerships with major mining pools worldwide ensure consistent block rewards and stable payouts. Diversified infrastructure reduces risk.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Full Transparency</h3>
+                    <p>All transactions verified on blockchain. Smart contracts are auditable on BSCScan. Real-time tracking of your balance, rewards, and mining performance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Invest in Mining</h3>
+                        <p>Purchase CleanSpark tokens using USDT, BNB, CAKE or any BEP20 token on PancakeSwap. Your investment is immediately allocated to our mining operations.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Mining Begins</h3>
+                        <p>We deploy your funds to our active mining rigs. Your tokens lock for 1 hour during initial setup to ensure proper allocation and security.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Earn Rewards</h3>
+                        <p>Receive 1% earnings every 15 minutes from mining profits. All distributions are automatic and transparent. Track your progress in real-time on our dashboard.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>Withdraw Anytime</h3>
+                        <p>Claim your earnings instantly or withdraw your principal investment after the lock period. Stable $1 price ensures your investment remains protected.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section id="stats" class="stats-section">
+        <div class="container">
+            <h2 class="section-title">Mining Economics</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">₿</div>
+                    <div class="stat-info">
+                        <h3>Mining Period</h3>
+                        <p class="stat-number">1 Hour</p>
+                        <p class="stat-desc">Setup Lock</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-info">
+                        <h3>Earning Interval</h3>
+                        <p class="stat-number">15 Min</p>
+                        <p class="stat-desc">1% Mining Profit</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <h3>Token Price</h3>
+                        <p class="stat-number">$1.00</p>
+                        <p class="stat-desc">Stable Entry</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💸</div>
+                    <div class="stat-info">
+                        <h3>Mining Fees</h3>
+                        <p class="stat-number">2%</p>
+                        <p class="stat-desc">Buy/Sell</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-info">
+                        <h3>Early Exit</h3>
+                        <p class="stat-number">30%</p>
+                        <p class="stat-desc">Penalty</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Buy Tokens Section -->
+    <section id="buy-tokens" class="features" style="background: var(--bg-primary);">
+        <div class="container">
+            <h2 class="section-title">Buy CleanSpark Tokens</h2>
+            <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                Purchase tokens directly from our contract. Fixed price: <strong>$0.0001 per token</strong>. 
+                Earn 5% referral commission when someone buys using your link!
+            </p>
+            
+            <div class="buy-tokens-container" style="max-width: 600px; margin: 0 auto;">
+                <!-- Not Connected -->
+                <div id="buyNotConnected" class="buy-card">
+                    <div class="buy-icon">₿</div>
+                    <h3>Connect Your Wallet</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Connect your wallet to buy CleanSpark tokens
+                    </p>
+                    <button class="btn btn-primary" onclick="openWalletModal()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                        🔷 Connect Wallet
+                    </button>
+                </div>
+                
+                <!-- Connected - Buy Interface -->
+                <div id="buyConnected" style="display: none;" class="buy-card">
+                    <h3 style="margin-bottom: 1rem;">Buy CleanSpark Tokens</h3>
+                    
+                    <!-- Price Info -->
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: center;">
+                        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">Fixed Price</p>
+                        <p style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">$0.0001 per token</p>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">1 USDT = 10,000 tokens</p>
+                    </div>
+                    
+                    <!-- Amount Input -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary);">
+                            Amount (USDT)
+                        </label>
+                        <input 
+                            type="number" 
+                            id="buyAmount" 
+                            placeholder="Enter amount (e.g., 100)"
+                            min="0.01"
+                            step="0.01"
+                            style="width: 100%; padding: 1rem; border: 2px solid var(--border-light); border-radius: 12px; font-size: 1.1rem; background: var(--bg-primary); color: var(--text-primary);"
+                            oninput="calculateTokens()"
+                        >
+                    </div>
+                    
+                    <!-- Tokens to Receive -->
+                    <div id="tokensPreview" style="background: var(--bg-secondary); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: var(--text-secondary);">You will receive:</span>
+                            <span id="tokensAmount" style="font-size: 1.2rem; font-weight: 700; color: var(--primary);">0 tokens</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Referral Info -->
+                    <div id="referralInfo" style="background: linear-gradient(135deg, #f59e0b15 0%, #d9770615 100%); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; display: none; border: 1px solid #f59e0b30;">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                            🎁 <strong>Referral Active!</strong> You're buying with a referral link.
+                        </p>
+                        <p style="color: var(--text-secondary); font-size: 0.85rem;">
+                            The referrer will receive 5% commission automatically.
+                        </p>
+                    </div>
+                    
+                    <!-- Buy Button -->
+                    <button 
+                        id="buyButton" 
+                        class="btn btn-primary" 
+                        onclick="handleBuyTokens()"
+                        style="width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 600;"
+                    >
+                        ₿ Buy Tokens
+                    </button>
+                    
+                    <!-- MetaMask Browser Notice (Only shows in MetaMask browser) -->
+                    <div id="metaMaskBrowserNotice" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); border: 2px solid #f6851b; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem; display: none;">
+                        <h4 style="color: #f6851b; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                            🦊 MetaMask Browser Detected!
+                        </h4>
+                        <p style="color: white; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.6;">
+                            You're using MetaMask's in-app browser! Add the token with <strong>one click</strong> below.
+                        </p>
+                        <button 
+                            id="autoAddToMetaMask" 
+                            class="btn" 
+                            style="background: #f6851b; color: white; padding: 1rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; width: 100%; display: none;"
+                        >
+                            📱 One-Click Add to MetaMask
+                        </button>
+                    </div>
+                    
+                    <!-- Important Warning -->
+                    <div style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 1.5rem; margin-top: 1.5rem;">
+                        <h4 style="color: #92400e; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                            ⚠️ Important: Token Not Verified Yet
+                        </h4>
+                        <p style="color: #78350f; font-size: 0.9rem; margin-bottom: 1rem; line-height: 1.6;">
+                            <strong>This token is not verified in Trust Wallet yet.</strong> After purchase, you may need to manually add the token to see it in your wallet.
+                        </p>
+                        <div style="background: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p style="color: #78350f; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600;">
+                                Contract Address:
+                            </p>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <code id="contractAddress" style="font-family: 'Courier New', monospace; font-size: 0.85rem; color: #1f2937; background: #f3f4f6; padding: 0.5rem; border-radius: 6px; word-break: break-all; flex: 1; min-width: 200px;">
+                                    0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4
+                                </code>
+                                <button onclick="copyContractAddress()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <button onclick="addToTrustWallet()" class="btn" style="background: #1f2937; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; flex: 1; min-width: 150px;">
+                                📱 Add to Trust Wallet
+                            </button>
+                            <button onclick="addToMetaMask()" class="btn" style="background: #f6851b; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; flex: 1; min-width: 150px;">
+                                🦊 Add to MetaMask
+                            </button>
+                        </div>
+                        <p style="color: #78350f; font-size: 0.8rem; margin-top: 1rem; line-height: 1.5;">
+                            <strong>After purchase:</strong> If tokens don't appear automatically, use the buttons above to add the token manually. Your tokens are safe - they're in your wallet, just not displayed yet.
+                        </p>
+                    </div>
+                    
+                    <!-- Info -->
+                    <p style="text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-top: 1rem;">
+                        ⚠️ Make sure you have enough BNB for gas fees
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Referral Section (for referrers) -->
+            <div id="myReferralLink" style="max-width: 600px; margin: 2rem auto 0; display: none;"></div>
+            
+            <!-- Referral Stats -->
+            <div id="referralStats" style="max-width: 600px; margin: 2rem auto 0; display: none;"></div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="features">
+        <div class="container">
+            <h2 class="section-title">Your Dashboard</h2>
+            
+            <!-- Not Connected Message -->
+            <div id="notConnected">
+                <div class="notice" style="max-width: 600px; margin: 0 auto;">
+                    <div class="notice-icon">₿</div>
+                    <div>
+                        <h3 style="margin-bottom: 0.5rem;">Connect Your Wallet</h3>
+                        <p>Connect your wallet to view your mining balance and claim earnings</p>
+                        <button class="btn btn-primary" onclick="openWalletModal()" style="margin-top: 1rem;">
+                            ₿ Connect Wallet
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Connected Dashboard -->
+            <div id="connectedDashboard" style="display:none;">
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Mining Balance</h3>
+                        <div class="metric" id="userBalance">0 cleanSpark</div>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Your total tokens</p>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Mining Earnings</h3>
+                        <div class="metric" id="pendingRewards">0 cleanSpark</div>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Ready to withdraw</p>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Locked Balance</h3>
+                        <div class="metric" id="lockedAmount">0 cleanSpark</div>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;" id="lockStatus">All unlocked</p>
+                    </div>
+                </div>
+                
+                <div class="dashboard-grid" style="margin-top: 2rem;">
+                    <div class="dashboard-card">
+                        <h3>Claim Earnings</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Withdraw your mining profits instantly</p>
+                        <button class="claim-btn" id="claimBtn">₿ Claim Mining Earnings</button>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Mining Actions</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Buy more tokens or exit your position</p>
+                        <div style="display: flex; gap: 1rem; flex-direction: column;">
+                            <button class="btn btn-primary" onclick="document.getElementById('buy-tokens').scrollIntoView({ behavior: 'smooth' })">
+                                ₿ Buy More Tokens
+                            </button>
+                            <button class="btn btn-secondary" onclick="window.open('https://pancakeswap.finance/swap?inputCurrency=0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4', '_blank')">
+                                💸 Exit Mining
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Company Section -->
+    <section id="company" class="features">
+        <div class="container">
+            <h2 class="section-title">About CleanSpark</h2>
+            <p class="section-subtitle">
+                We are a professional Bitcoin mining operation, providing transparent and secure mining services powered by blockchain technology.
+            </p>
+            
+            <div class="features-grid" style="max-width: 900px; margin: 0 auto;">
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <h3>Our Company</h3>
+                    <p style="text-align: left;">CleanSpark is a trusted Bitcoin mining platform operating since 2024. We invest in state-of-the-art mining infrastructure and leverage cutting-edge ASIC hardware to maximize returns for our investors. Our team consists of experienced blockchain engineers, financial analysts, and mining experts dedicated to transparency and profitability.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h3>How We Earn</h3>
+                    <p style="text-align: left;">We earn through Bitcoin mining rewards. When you invest in CleanSpark tokens, we allocate your funds to our mining pool operations. The mining profits are then distributed back to token holders as rewards. Our revenue model is simple: successful mining = shared rewards. No hidden fees, no complex mechanics - just transparent profit sharing.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3>Security & Safety</h3>
+                    <p style="text-align: left;">Security is our top priority. Our smart contracts are deployed on Binance Smart Chain with verified code. All transactions are transparent and auditable on BSCScan. We use industry-standard security practices and regularly audit our systems. Your funds are protected by blockchain technology.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Our Mining Infrastructure</h3>
+                    <p style="text-align: left;">We operate multiple mining facilities across strategic locations. Our hardware includes latest-generation ASIC miners with optimal hash rates. We maintain partnerships with major mining pools to ensure consistent block rewards. Our operations are optimized for maximum efficiency and profitability.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Terms & Privacy Section -->
+    <section class="how-it-works">
+        <div class="container">
+            <h2 class="section-title">Legal Information</h2>
+            <div class="features-grid" style="max-width: 900px; margin: 0 auto;">
+                <div class="feature-card" style="text-align: left;">
+                    <h3 style="margin-bottom: 1rem;">Terms & Conditions</h3>
+                    <div style="color: var(--text-secondary); line-height: 1.8;">
+                        <p style="margin-bottom: 1rem;"><strong>1. Acceptance of Terms:</strong> By using CleanSpark, you agree to these terms. If you disagree, do not use our platform.</p>
+                        <p style="margin-bottom: 1rem;"><strong>2. Risk Warning:</strong> Cryptocurrency investments carry significant risk. You may lose your entire investment. Only invest what you can afford to lose.</p>
+                        <p style="margin-bottom: 1rem;"><strong>3. Mining Performance:</strong> Mining rewards depend on Bitcoin network difficulty, hash rate, and market conditions. Past performance does not guarantee future results.</p>
+                        <p style="margin-bottom: 1rem;"><strong>4. Lock Period:</strong> Tokens are locked for 1 hour after purchase. Early withdrawal incurs a 30% penalty. Standard withdrawals after lock period have 2% fees.</p>
+                        <p style="margin-bottom: 1rem;"><strong>5. User Responsibility:</strong> You are responsible for securing your wallet and private keys. We are not liable for lost access or stolen funds.</p>
+                    </div>
+                </div>
+                
+                <div class="feature-card" style="text-align: left;">
+                    <h3 style="margin-bottom: 1rem;">Privacy Policy</h3>
+                    <div style="color: var(--text-secondary); line-height: 1.8;">
+                        <p style="margin-bottom: 1rem;"><strong>1. Wallet Address:</strong> We only access your wallet address to read your balance and process transactions. We never store private keys.</p>
+                        <p style="margin-bottom: 1rem;"><strong>2. On-Chain Data:</strong> All transactions are public on the blockchain. We only read what's already visible on BSCScan.</p>
+                        <p style="margin-bottom: 1rem;"><strong>3. No Personal Data:</strong> We do not collect, store, or process any personal information, emails, or phone numbers.</p>
+                        <p style="margin-bottom: 1rem;"><strong>4. Third Parties:</strong> We use WalletConnect for secure wallet connections. Their privacy policy applies to wallet data.</p>
+                        <p style="margin-bottom: 1rem;"><strong>5. Your Rights:</strong> You have full control over your data. Disconnect anytime and no data is retained.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="features">
+        <div class="container">
+            <h2 class="section-title">Contact Us</h2>
+            <div class="features-grid" style="max-width: 600px; margin: 0 auto;">
+                <div class="feature-card">
+                    <h3 style="margin-bottom: 1.5rem;">Send Us a Message</h3>
+                    <form id="contactForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <input type="text" placeholder="Your Name" required style="padding: 1rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 1rem;">
+                        <input type="email" placeholder="Your Email" required style="padding: 1rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 1rem;">
+                        <textarea placeholder="Your Message" rows="5" required style="padding: 1rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section footer-company">
+                    <div class="logo">
+                        <span class="logo-icon">₿</span>
+                        <span class="logo-text">CleanSpark</span>
+                    </div>
+                    <p>Professional Bitcoin mining platform providing transparent and secure mining services powered by blockchain technology.</p>
+                    <div class="footer-contact">
+                        <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> Blockchain Based, Global Operations</p>
+                        <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> support@cleanspark.com</p>
+                        <p><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> 24/7 Available</p>
+                    </div>
+                    <div class="social-links">
+                        <a href="https://t.me/cleanspark" target="_blank" class="social-icon" title="Telegram">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                            </svg>
+                        </a>
+                        <a href="https://twitter.com/cleanspark" target="_blank" class="social-icon" title="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
+                            </svg>
+                        </a>
+                        <a href="https://discord.gg/cleanspark" target="_blank" class="social-icon" title="Discord">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                            </svg>
+                        </a>
+                        <a href="https://github.com/cleanspark" target="_blank" class="social-icon" title="GitHub">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-section footer-links">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="#dashboard">Dashboard</a></li>
+                        <li><a href="#stats">Economics</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section footer-links">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#company">About Us</a></li>
+                        <li><a href="#contact">Contact Us</a></li>
+                        <li><a href="https://bscscan.com/token/0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4" target="_blank">BSCScan</a></li>
+                        <li><a href="https://pancakeswap.finance" target="_blank">PancakeSwap</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section footer-links">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#contact">Contact Us</a></li>
+                        <li><a href="#company">Privacy Policy</a></li>
+                        <li><a href="#company">Terms of Service</a></li>
+                        <li><a href="https://bscscan.com/address/0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4" target="_blank">Smart Contract</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 CleanSpark. All rights reserved.</p>
+                <p class="warning">⚠️ Invest responsibly. Always do your own research.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Reown AppKit Network Button (optional, for network switching) -->
+    <appkit-network-button style="display:none" />
+    
+    <!-- Initialize wallet connect function immediately (before modules load) -->
+    <script>
+        // Define placeholder function immediately so onclick handlers work
+        window.openWalletModal = function() {
+            console.log('🔵 openWalletModal called')
+            
+            // Use official AppKit modal
+            if (window.openConnectModal && typeof window.openConnectModal === 'function' && window.walletModalReady) {
+                window.openConnectModal()
+            } else if (window.modal && typeof window.modal.open === 'function') {
+                window.modal.open()
+            } else {
+                alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
+            }
+        }
+        
+        window.disconnectWallet = function() {
+            if (window.modal && typeof window.modal.close === 'function') {
+                window.modal.close()
+            }
+            // Clear state
+            window.account = null
+            window.provider = null
+            window.signer = null
+            updateWalletUI()
+        }
+        
+        function updateWalletUI() {
+            const walletBtn = document.getElementById('walletConnectBtn')
+            const walletInfo = document.getElementById('walletInfo')
+            const walletAddress = document.getElementById('walletAddress')
+            
+            if (window.account) {
+                if (walletBtn) walletBtn.style.display = 'none'
+                if (walletInfo) walletInfo.style.display = 'flex'
+                if (walletAddress) {
+                    walletAddress.textContent = `${window.account.substring(0, 6)}...${window.account.substring(38)}`
+                }
+            } else {
+                if (walletBtn) walletBtn.style.display = 'block'
+                if (walletInfo) walletInfo.style.display = 'none'
+            }
+        }
+        
+        console.log('✅ Wallet connect placeholder functions initialized')
+    </script>
+    
+    <!-- Define all functions FIRST, before loading ethers.js -->
+    <script>
+        // Polyfill for 'process' (required by WalletConnect)
+        if (typeof process === 'undefined') {
+            window.process = {
+                env: { NODE_ENV: 'production' },
+                version: '',
+                versions: {},
+                browser: true
+            }
+            console.log('✅ Process polyfill added')
+        }
+        
+        // Function to load WalletConnect provider from CDN
+        function loadWalletConnect() {
+            // Try loading WalletConnect Ethereum Provider from CDN
+            // Try jsDelivr first (better UMD support)
+            const wcScript = document.createElement('script')
+            wcScript.src = 'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.13.1/dist/index.umd.js'
+            wcScript.onload = function() {
+                console.log('✅ WalletConnect provider script loaded')
+                // Wait a moment for the global to be available
+                setTimeout(function() {
+                    // Check multiple possible global names
+                    let providerFound = false
+                    const possibleNames = [
+                        'EthereumProvider',
+                        'WalletConnectEthereumProvider',
+                        'WalletConnect',
+                        'WC'
+                    ]
+                    
+                    for (const name of possibleNames) {
+                        if (typeof window[name] !== 'undefined') {
+                            console.log('✅ Found WalletConnect provider as:', name)
+                            providerFound = true
+                            break
+                        }
+                    }
+                    
+                    // Also check if it's nested
+                    if (!providerFound && window.WalletConnect && window.WalletConnect.EthereumProvider) {
+                        console.log('✅ Found WalletConnect provider as WalletConnect.EthereumProvider')
+                        providerFound = true
+                    }
+                    
+                    // Check for scoped package name (common with UMD bundles)
+                    if (!providerFound && window['@walletconnect/ethereum-provider']) {
+                        console.log('✅ Found WalletConnect provider as @walletconnect/ethereum-provider')
+                        const wcModule = window['@walletconnect/ethereum-provider']
+                        // Extract EthereumProvider from the module
+                        if (wcModule && (wcModule.EthereumProvider || wcModule.default)) {
+                            window.EthereumProvider = wcModule.EthereumProvider || wcModule.default
+                            console.log('✅ Stored EthereumProvider in window.EthereumProvider')
+                            providerFound = true
+                        } else if (wcModule && typeof wcModule.init === 'function') {
+                            // It might be the provider itself
+                            window.EthereumProvider = { init: wcModule.init.bind(wcModule) }
+                            console.log('✅ Wrapped provider init function')
+                            providerFound = true
+                        }
+                    }
+                    
+                    if (providerFound) {
+                        console.log('✅ WalletConnect Ethereum Provider available')
+                    } else {
+                        console.warn('⚠️ WalletConnect provider loaded but not accessible')
+                        console.log('Available globals:', Object.keys(window).filter(k => 
+                            k.toLowerCase().includes('wallet') || 
+                            k.toLowerCase().includes('connect') ||
+                            k.includes('@')
+                        ))
+                        // Try to inspect the scoped package
+                        if (window['@walletconnect/ethereum-provider']) {
+                            console.log('Inspecting @walletconnect/ethereum-provider:', window['@walletconnect/ethereum-provider'])
+                            const wc = window['@walletconnect/ethereum-provider']
+                            console.log('Keys:', Object.keys(wc || {}))
+                        }
+                    }
+                    initScripts()
+                }, 500) // Increased wait time
+            }
+            wcScript.onerror = function() {
+                console.warn('⚠️ jsDelivr failed, trying unpkg...')
+                loadWalletConnectUnpkg()
+            }
+            document.body.appendChild(wcScript)
+        }
+        
+        // Fallback: Try unpkg CDN
+        function loadWalletConnectUnpkg() {
+            const wcScript = document.createElement('script')
+            wcScript.src = 'https://unpkg.com/@walletconnect/ethereum-provider@2.13.1/dist/index.umd.js'
+            wcScript.onload = function() {
+                console.log('✅ WalletConnect provider script loaded from unpkg')
+                setTimeout(function() {
+                    // Same detection logic as main function
+                    if (window['@walletconnect/ethereum-provider']) {
+                        const wcModule = window['@walletconnect/ethereum-provider']
+                        if (wcModule && (wcModule.EthereumProvider || wcModule.default)) {
+                            window.EthereumProvider = wcModule.EthereumProvider || wcModule.default
+                            console.log('✅ Stored EthereumProvider in window.EthereumProvider')
+                        } else if (wcModule && typeof wcModule.init === 'function') {
+                            window.EthereumProvider = { init: wcModule.init.bind(wcModule) }
+                            console.log('✅ Wrapped provider init function')
+                        }
+                    }
+                    initScripts()
+                }, 500)
+            }
+            wcScript.onerror = function() {
+                console.error('❌ All WalletConnect CDN attempts failed')
+                initScripts() // Continue anyway
+            }
+            document.body.appendChild(wcScript)
+        }
+        
+        // Function to load other scripts after ethers.js and WalletConnect are ready
+        function initScripts() {
+            if (typeof ethers === 'undefined') {
+                console.log('⏳ Waiting for ethers.js...')
+                setTimeout(initScripts, 50)
+                return
+            }
+            
+            console.log('✅ ethers.js is ready!')
+            
+            // Check if scripts already loaded
+            if (document.querySelector('script[src="walletconnect-simple.js"]')) {
+                console.log('✅ Scripts already loaded')
+                return
+            }
+            
+            // Load AppKit setup (official Reown AppKit UI)
+            const appkitScript = document.createElement('script')
+            appkitScript.type = 'module'
+            appkitScript.src = 'appkit-setup.js'
+            appkitScript.onload = function() {
+                console.log('✅ appkit-setup.js loaded')
+                
+                // Load app-simple.js after AppKit setup
+                const appScript = document.createElement('script')
+                appScript.src = 'app-simple.js'
+                appScript.onload = function() {
+                    console.log('✅ app-simple.js loaded')
+                    console.log('✅ All scripts loaded successfully!')
+                }
+                appScript.onerror = function() {
+                    console.error('❌ Failed to load app-simple.js')
+                }
+                document.body.appendChild(appScript)
+            }
+            appkitScript.onerror = function() {
+                console.error('❌ Failed to load appkit-setup.js')
+                // Fallback: try loading walletconnect-simple.js
+                console.log('⚠️ Falling back to simple WalletConnect...')
+                const walletScript = document.createElement('script')
+                walletScript.src = 'walletconnect-simple.js'
+                document.body.appendChild(walletScript)
+            }
+            document.body.appendChild(appkitScript)
+        }
+        
+        // Fallback: Load from unpkg if jsDelivr fails
+        function loadEthersFromUnpkg() {
+            if (typeof ethers !== 'undefined') {
+                loadWalletConnect()
+                return
+            }
+            
+            console.log('🔄 Trying unpkg CDN...')
+            const script = document.createElement('script')
+            script.src = 'https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js'
+            script.onload = function() {
+                console.log('✅ ethers.js loaded from unpkg')
+                loadWalletConnect()
+            }
+            script.onerror = function() {
+                console.error('❌ Failed from unpkg, trying cdnjs...')
+                loadEthersFromCdnjs()
+            }
+            document.body.appendChild(script)
+        }
+        
+        // Fallback: Load from cdnjs if unpkg fails
+        function loadEthersFromCdnjs() {
+            if (typeof ethers !== 'undefined') {
+                loadWalletConnect()
+                return
+            }
+            
+            console.log('🔄 Trying cdnjs CDN...')
+            const script = document.createElement('script')
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js'
+            script.onload = function() {
+                console.log('✅ ethers.js loaded from cdnjs')
+                loadWalletConnect()
+            }
+            script.onerror = function() {
+                console.error('❌ All CDN attempts failed!')
+                alert('❌ Failed to load ethers.js!\n\nPlease check your internet connection and refresh the page.')
+            }
+            document.body.appendChild(script)
+        }
+    </script>
+    
+    <!-- Load AppKit Setup (Official Reown AppKit UI with wallet list, search, email/Google) -->
+    <script type="module" src="main.js"></script>
+    
+    <!-- Load ethers.js for contract interactions -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" 
+            onload="console.log('✅ ethers.js loaded'); window.ethersLoaded = true;"
+            onerror="console.error('❌ Failed to load ethers.js')"></script>
+    
+    <!-- Load app-simple.js after a short delay to ensure AppKit is ready -->
+    <script>
+        setTimeout(function() {
+            const appScript = document.createElement('script')
+            appScript.src = 'app-simple.js'
+            appScript.onload = function() {
+                console.log('✅ app-simple.js loaded')
+            }
+            appScript.onerror = function() {
+                console.error('❌ Failed to load app-simple.js')
+            }
+            document.body.appendChild(appScript)
+        }, 2000) // Wait 2 seconds for AppKit to initialize
+    </script>
+</body>
+</html>
