@@ -80,16 +80,31 @@ function initApp() {
     // Listen for wallet connection events
     window.addEventListener('walletConnected', (e) => {
         console.log('✅ Wallet connected event received in app-simple.js')
+        console.log('📋 Event details:', e.detail)
         // Use window variables to avoid conflicts
-        window.account = e.detail.account
-        window.provider = e.detail.provider
-        window.signer = e.detail.signer
+        if (e.detail) {
+            window.account = e.detail.account
+            window.provider = e.detail.provider
+            window.signer = e.detail.signer
+            console.log('✅ Set window.account:', window.account)
+            console.log('✅ Set window.provider:', !!window.provider)
+            console.log('✅ Set window.signer:', !!window.signer)
+        }
         setupContracts()
         // Wait a bit for contracts to initialize, then update dashboard
         setTimeout(() => {
+            console.log('🔄 Calling updateDashboard from walletConnected event...')
             updateDashboard()
         }, 500)
     })
+    
+    // Also check immediately if wallet is already connected
+    setTimeout(() => {
+        if (window.account && !contract) {
+            console.log('🔄 Wallet already connected on page load, setting up...')
+            checkExistingConnection()
+        }
+    }, 2000)
 }
 
 // Setup button handlers
@@ -114,22 +129,44 @@ function setupButtons() {
 
 // Check if wallet is already connected
 async function checkExistingConnection() {
+    console.log('🔍 Checking for existing wallet connection...')
+    
     // Check if wallet is connected via MetaMask
-    if (typeof window.ethereum !== 'undefined' && window.ethereum.selectedAddress) {
-        const selectedAddress = window.ethereum.selectedAddress
-        console.log('✅ MetaMask wallet already connected:', selectedAddress)
+    if (typeof window.ethereum !== 'undefined') {
+        // Try to get selected address
+        let selectedAddress = window.ethereum.selectedAddress
         
-        // Set account if not already set
-        if (!window.account) {
-            window.account = selectedAddress
+        // If no selectedAddress, try to get accounts
+        if (!selectedAddress && window.ethereum.request) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+                if (accounts && accounts.length > 0) {
+                    selectedAddress = accounts[0]
+                    console.log('✅ Found connected account via eth_accounts:', selectedAddress)
+                }
+            } catch (e) {
+                console.log('⚠️ Could not get accounts:', e.message)
+            }
         }
         
-        // Setup provider and signer if not already set
-        if (!window.provider || !window.signer) {
-            if (typeof ethers !== 'undefined') {
-                window.provider = new ethers.providers.Web3Provider(window.ethereum)
-                window.signer = window.provider.getSigner()
-                console.log('✅ Provider and signer set up from MetaMask')
+        if (selectedAddress) {
+            console.log('✅ MetaMask wallet already connected:', selectedAddress)
+            
+            // Set account if not already set
+            if (!window.account) {
+                window.account = selectedAddress
+                console.log('✅ Set window.account from MetaMask:', window.account)
+            }
+            
+            // Setup provider and signer if not already set
+            if (!window.provider || !window.signer) {
+                if (typeof ethers !== 'undefined') {
+                    window.provider = new ethers.providers.Web3Provider(window.ethereum)
+                    window.signer = window.provider.getSigner()
+                    console.log('✅ Provider and signer set up from MetaMask')
+                } else {
+                    console.warn('⚠️ ethers.js not available yet')
+                }
             }
         }
     }
@@ -142,13 +179,13 @@ async function checkExistingConnection() {
         
         // Wait a bit for contracts to initialize, then update dashboard
         setTimeout(() => {
-            console.log('🔄 Updating dashboard for existing connection...')
+            console.log('🔄 Updating dashboard for existing connection (first attempt)...')
             updateDashboard()
         }, 1000)
         
         // Also update again after 3 seconds to ensure it's loaded
         setTimeout(() => {
-            console.log('🔄 Second dashboard update for existing connection...')
+            console.log('🔄 Updating dashboard for existing connection (second attempt)...')
             updateDashboard()
         }, 3000)
     } else {
@@ -156,6 +193,7 @@ async function checkExistingConnection() {
         console.log('Account:', window.account)
         console.log('Provider:', !!window.provider)
         console.log('Signer:', !!window.signer)
+        console.log('window.ethereum:', typeof window.ethereum !== 'undefined')
     }
 }
 
