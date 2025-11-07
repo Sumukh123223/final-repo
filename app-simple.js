@@ -314,48 +314,21 @@ async function updateDashboard() {
             return
         }
         
-        // Try to get user holdings first (more complete data)
+        // Get balance and calculate rewards using calculateRewards function
         let balance = ethers.BigNumber.from(0)
         let rewards = ethers.BigNumber.from(0)
-        let totalBalance = ethers.BigNumber.from(0)
         
-        try {
-            console.log('📞 Calling contract.getUserHoldings with account:', account)
-            const holdings = await contract.getUserHoldings(account)
-            console.log('✅ getUserHoldings call successful')
-            console.log('📊 Holdings result:', holdings)
-            
-            if (holdings && holdings.length >= 6) {
-                const lockedAmount = holdings[0] // lockedAmount
-                rewards = holdings[1] // earnedRewards
-                totalBalance = holdings[2] // totalBalance
-                const pendingRewards = holdings[3] // pendingRewards
-                
-                // Use totalBalance as the main balance
-                balance = totalBalance
-                
-                // Use pendingRewards if available, otherwise use earnedRewards
-                if (pendingRewards && pendingRewards.gt(0)) {
-                    rewards = pendingRewards
-                }
-                
-                console.log('📊 Parsed holdings:', {
-                    rewards: rewards.toString(),
-                    totalBalance: totalBalance.toString()
-                })
-            }
-        } catch (e) {
-            console.log('⚠️ getUserHoldings not available or failed:', e.message)
-            console.log('📞 Falling back to balanceOf and calculateRewards...')
-            
-            // Fallback to individual calls
-            console.log('📞 Calling contract.balanceOf with account:', account)
-            balance = await contract.balanceOf(account)
-            console.log('✅ balanceOf call successful')
-            console.log('📞 Calling contract.calculateRewards with account:', account)
-            rewards = await contract.calculateRewards(account)
-            console.log('✅ calculateRewards call successful')
-        }
+        // Always use balanceOf for balance
+        console.log('📞 Calling contract.balanceOf with account:', account)
+        balance = await contract.balanceOf(account)
+        console.log('✅ balanceOf call successful')
+        console.log('📊 Balance result:', balance.toString())
+        
+        // Always use calculateRewards for pending rewards (this is the actual reward calculation)
+        console.log('📞 Calling contract.calculateRewards with account:', account)
+        rewards = await contract.calculateRewards(account)
+        console.log('✅ calculateRewards call successful')
+        console.log('📊 Calculated rewards result:', rewards.toString())
         
         console.log('📊 Final values:', {
             balance: balance.toString(),
