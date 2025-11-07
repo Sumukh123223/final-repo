@@ -546,10 +546,17 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
             // Check balance
             let usdtBalance
             try {
+                console.log('📞 Calling usdtContract.balanceOf...')
                 usdtBalance = await usdtContract.balanceOf(account)
-                console.log('💰 USDT Balance:', ethers.utils.formatEther(usdtBalance))
+                const balanceFormatted = ethers.utils.formatEther(usdtBalance)
+                console.log('✅ USDT Balance check successful')
+                console.log('💰 USDT Balance (raw):', usdtBalance.toString())
+                console.log('💰 USDT Balance (formatted):', balanceFormatted)
+                console.log('💰 Required amount (wei):', amountInWei.toString())
+                console.log('💰 Required amount (formatted):', usdtAmount)
             } catch (error) {
                 console.error('❌ Error checking USDT balance:', error)
+                console.error('Error stack:', error.stack)
                 if (window.showCustomModal) {
                     window.showCustomModal('Error', 'Failed to check USDT balance: ' + (error.message || 'Unknown error'), 'error')
                 } else {
@@ -558,15 +565,28 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
                 return
             }
             
-            if (usdtBalance.lt(amountInWei)) {
-                const message = `Insufficient USDT balance!\n\nYou have: ${ethers.utils.formatEther(usdtBalance)} USDT\nRequired: ${usdtAmount} USDT`
+            // Compare balances
+            console.log('🔍 Comparing balances...')
+            console.log('🔍 usdtBalance:', usdtBalance.toString())
+            console.log('🔍 amountInWei:', amountInWei.toString())
+            const hasEnough = usdtBalance.gte(amountInWei)
+            console.log('🔍 Has enough balance:', hasEnough)
+            
+            if (!hasEnough) {
+                const balanceFormatted = ethers.utils.formatEther(usdtBalance)
+                const message = `Insufficient USDT balance!\n\nYou have: ${balanceFormatted} USDT\nRequired: ${usdtAmount} USDT`
+                console.log('❌ Insufficient balance - showing error modal')
                 if (window.showCustomModal) {
                     window.showCustomModal('Insufficient Balance', message, 'error')
+                } else if (window.originalAlert) {
+                    window.originalAlert(`❌ ${message}`)
                 } else {
                     alert(`❌ ${message}`)
                 }
+                console.log('✅ Error modal shown, returning')
                 return
             }
+            console.log('✅ Balance check passed')
             
             // Check allowance
             console.log('📋 Checking USDT allowance...')
