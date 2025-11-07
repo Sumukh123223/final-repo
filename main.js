@@ -58,6 +58,10 @@ let wagmiConfig
 
 try {
   console.log('🚀 Creating AppKit modal...')
+  console.log('🚀 WagmiAdapter:', wagmiAdapter)
+  console.log('🚀 Networks:', [bsc])
+  console.log('🚀 Project ID:', projectId)
+  
   modal = createAppKit({
     adapters: [wagmiAdapter],
     networks: [bsc],
@@ -73,6 +77,7 @@ try {
   console.log('✅ AppKit modal created:', modal)
   console.log('✅ Modal type:', typeof modal)
   console.log('✅ Modal.open type:', typeof modal?.open)
+  console.log('✅ Modal methods:', Object.keys(modal || {}))
   
   // 5. Get wagmiConfig for contract interactions
   wagmiConfig = wagmiAdapter.wagmiConfig
@@ -83,12 +88,15 @@ try {
   window.walletModalReady = true
   
   console.log('✅ AppKit initialized and ready!')
+  console.log('✅ window.modal set:', !!window.modal)
+  console.log('✅ window.walletModalReady:', window.walletModalReady)
 } catch (error) {
   console.error('❌ Error creating AppKit modal:', error)
   console.error('Error details:', error.message, error.stack)
-  // Set modal to null so fallback can work
-  window.modal = null
+  // Even if there's an error, try to set what we can
+  window.modal = modal || null
   window.walletModalReady = false
+  console.error('❌ AppKit initialization failed - WalletConnect will not work')
 }
 
 export { modal, wagmiConfig }
