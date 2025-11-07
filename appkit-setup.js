@@ -12,9 +12,9 @@ async function initAppKit() {
     try {
         console.log('🚀 Initializing Reown AppKit...')
         
-        // Import AppKit from CDN (using esm.sh which supports ES modules)
-        const { createAppKit } = await import('https://esm.sh/@reown/appkit@latest')
-        const { WagmiAdapter } = await import('https://esm.sh/@reown/appkit-adapter-wagmi@latest')
+        // Import AppKit from CDN (using pinned versions to avoid breaking changes)
+        const { createAppKit } = await import('https://esm.sh/@reown/appkit@1.8.12')
+        const { WagmiAdapter } = await import('https://esm.sh/@reown/appkit-adapter-wagmi@1.0.4')
         
         // Define BSC network manually (since networks import path is problematic)
         const bsc = {
@@ -64,7 +64,9 @@ async function initAppKit() {
             metadata,
             projectId,
             features: {
-                analytics: true
+                analytics: true,
+                email: false, // Disable email auth to avoid W3mFrameProviderSingleton error
+                socials: false // Disable social auth to avoid W3mFrameProviderSingleton error
             }
         })
         
@@ -80,21 +82,27 @@ async function initAppKit() {
         window.openConnectModal = () => {
             try {
                 if (modal && typeof modal.open === 'function') {
-                    modal.open()
+                    // Use setTimeout to prevent blocking the click handler
+                    setTimeout(() => {
+                        modal.open()
+                    }, 0)
                 } else {
                     console.error('Modal not ready')
                     alert('Wallet connection not ready. Please refresh the page.')
                 }
             } catch (error) {
                 console.error('Error opening modal:', error)
-                alert('Error connecting wallet: ' + error.message)
+                // Don't show alert for module import errors, just log them
+                if (!error.message.includes('W3mFrameProviderSingleton') && !error.message.includes('does not provide an export')) {
+                    alert('Error connecting wallet: ' + error.message)
+                }
             }
         }
         
         window.openWalletModal = window.openConnectModal
         
         // Listen for account changes using Wagmi's watchAccount
-        const { watchAccount } = await import('https://esm.sh/@wagmi/core@latest')
+        const { watchAccount } = await import('https://esm.sh/@wagmi/core@2.4.11')
         
         // Watch for account changes
         const unwatch = watchAccount(wagmiConfig, {

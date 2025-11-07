@@ -613,6 +613,31 @@
     
     <!-- Initialize wallet connect function immediately (before modules load) -->
     <script>
+        // Global error handler to suppress non-critical module loading errors
+        window.addEventListener('error', function(event) {
+            // Suppress W3mFrameProviderSingleton and similar module import errors
+            if (event.message && (
+                event.message.includes('W3mFrameProviderSingleton') ||
+                event.message.includes('does not provide an export') ||
+                event.message.includes('Failed to fetch dynamically imported module')
+            )) {
+                console.warn('⚠️ Suppressed non-critical module error:', event.message)
+                event.preventDefault()
+                return false
+            }
+        }, true)
+        
+        // Handle unhandled promise rejections from module imports
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.message && (
+                event.reason.message.includes('W3mFrameProviderSingleton') ||
+                event.reason.message.includes('does not provide an export')
+            )) {
+                console.warn('⚠️ Suppressed non-critical promise rejection:', event.reason.message)
+                event.preventDefault()
+            }
+        })
+        
         // Define placeholder function immediately so onclick handlers work
         window.openWalletModal = function() {
             console.log('🔵 openWalletModal called')

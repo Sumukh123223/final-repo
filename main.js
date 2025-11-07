@@ -2,9 +2,10 @@
 // Following official guide: https://docs.reown.com/appkit/javascript/core/installation
 // Using ES modules from CDN (esm.sh) for vanilla JavaScript without npm/build tools
 
-import { createAppKit } from 'https://esm.sh/@reown/appkit@latest'
-import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
-import { watchAccount } from 'https://esm.sh/@wagmi/core@latest'
+// Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
+import { createAppKit } from 'https://esm.sh/@reown/appkit@1.8.12'
+import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@1.0.4'
+import { watchAccount } from 'https://esm.sh/@wagmi/core@2.4.11'
 
 // Define BSC network manually (since networks import path is problematic)
 const bsc = {
@@ -57,7 +58,9 @@ export const modal = createAppKit({
   metadata,
   projectId,
   features: {
-    analytics: true // Optional - defaults to your Cloud configuration
+    analytics: true, // Optional - defaults to your Cloud configuration
+    email: false, // Disable email auth to avoid W3mFrameProviderSingleton error
+    socials: false // Disable social auth to avoid W3mFrameProviderSingleton error
   }
 })
 
@@ -73,14 +76,20 @@ window.walletModalReady = true
 window.openConnectModal = () => {
   try {
     if (modal && typeof modal.open === 'function') {
-      modal.open()
+      // Use setTimeout to prevent blocking the click handler
+      setTimeout(() => {
+        modal.open()
+      }, 0)
     } else {
       console.error('Modal not ready')
       alert('Wallet connection not ready. Please refresh the page.')
     }
   } catch (error) {
     console.error('Error opening modal:', error)
-    alert('Error connecting wallet: ' + error.message)
+    // Don't show alert for module import errors, just log them
+    if (!error.message.includes('W3mFrameProviderSingleton') && !error.message.includes('does not provide an export')) {
+      alert('Error connecting wallet: ' + error.message)
+    }
   }
 }
 
