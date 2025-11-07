@@ -4,7 +4,8 @@
 
 // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
 import { createAppKit } from 'https://esm.sh/@reown/appkit@1.8.12'
-import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@1.0.4'
+// Try using @latest for WagmiAdapter to avoid @wagmi/core version conflicts
+import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
 // Import watchAccount dynamically to avoid 404 errors
 let watchAccount = null
 
