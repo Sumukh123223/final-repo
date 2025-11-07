@@ -17,16 +17,15 @@ console.log('✅ window.mainJsLoaded set to true')
 try {
   console.log('📦 Starting AppKit initialization...')
   
-  // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
-  // Try using unpkg which serves pre-built bundles - better for dependency resolution
-  console.log('📦 Importing createAppKit from unpkg...')
-  const appkitModule = await import('https://unpkg.com/@reown/appkit@1.6.3/dist/index.esm.js')
+  // Use official Reown AppKit - following official documentation
+  // Try latest stable version with proper CDN imports
+  console.log('📦 Importing createAppKit from esm.sh (official pattern)...')
+  const appkitModule = await import('https://esm.sh/@reown/appkit')
   const { createAppKit } = appkitModule
   console.log('✅ createAppKit imported:', typeof createAppKit)
   
-  console.log('📦 Importing WagmiAdapter from unpkg...')
-  // Pin WagmiAdapter to a version compatible with AppKit 1.6.3
-  const adapterModule = await import('https://unpkg.com/@reown/appkit-adapter-wagmi@1.0.3/dist/index.esm.js')
+  console.log('📦 Importing WagmiAdapter from esm.sh...')
+  const adapterModule = await import('https://esm.sh/@reown/appkit-adapter-wagmi')
   const { WagmiAdapter } = adapterModule
   console.log('✅ WagmiAdapter imported:', typeof WagmiAdapter)
   
@@ -35,7 +34,8 @@ try {
   // Import watchAccount dynamically to avoid 404 errors
   let watchAccount = null
   
-  // Define BSC network manually (since networks import path is problematic)
+  // Define BSC network manually (BSC is not in default networks, need to define custom)
+  // Following Viem network format as per official docs
   const bsc = {
     id: 56,
     name: 'BNB Smart Chain',
@@ -92,36 +92,18 @@ try {
     console.log('🚀 Networks:', [bsc])
     console.log('🚀 Project ID:', projectId)
     
-    // Suppress W3mFrameProviderSingleton errors temporarily
-    const originalError = window.onerror
-    const suppressedErrors = []
-    window.onerror = function(msg, url, line, col, error) {
-      if (msg && msg.includes('W3mFrameProviderSingleton')) {
-        suppressedErrors.push(msg)
-        console.warn('⚠️ Suppressed W3mFrameProviderSingleton error during AppKit creation')
-        return true // Suppress the error
+    // Create AppKit modal following official documentation pattern
+    // Disable email/socials features to avoid module errors
+    modal = createAppKit({
+      adapters: [wagmiAdapter],
+      networks: [bsc],
+      metadata,
+      projectId,
+      features: {
+        analytics: true // Optional - defaults to your Cloud configuration
+        // email and socials disabled by default to avoid module errors
       }
-      if (originalError) return originalError.apply(this, arguments)
-      return false
-    }
-    
-    try {
-      // Wrap in try-catch to handle AccountController and other module errors gracefully
-      modal = createAppKit({
-        adapters: [wagmiAdapter],
-        networks: [bsc],
-        metadata,
-        projectId,
-        features: {
-          analytics: true, // Optional - defaults to your Cloud configuration
-          email: false, // Disable email auth to avoid W3mFrameProviderSingleton error
-          socials: false // Disable social auth to avoid W3mFrameProviderSingleton error
-        }
-      })
-    } finally {
-      // Restore original error handler
-      window.onerror = originalError
-    }
+    })
     
     console.log('✅ AppKit modal created:', modal)
     console.log('✅ Modal type:', typeof modal)
