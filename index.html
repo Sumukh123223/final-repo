@@ -39,7 +39,7 @@
                     <!-- Official Reown AppKit Button Component -->
                     <appkit-button id="appkitButton" style="display: none;"></appkit-button>
                     <!-- Fallback custom button (shown by default, hidden when AppKit button is ready) -->
-                    <button class="wallet-connect-btn" id="walletConnectBtn" onclick="openWalletModal()">
+                    <button class="wallet-connect-btn" id="walletConnectBtn" onclick="openWalletModal(); return false;">
                         🔷 Connect Wallet
                     </button>
                     <div id="walletInfo" style="display:none; align-items: center; gap: 0.75rem;">
@@ -260,7 +260,7 @@
                     <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
                         Connect your wallet to buy CleanSpark tokens
                     </p>
-                    <button class="btn btn-primary" onclick="openWalletModal()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                    <button class="btn btn-primary" onclick="openWalletModal(); return false;" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
                         🔷 Connect Wallet
                     </button>
                 </div>
@@ -398,7 +398,7 @@
                     <div>
                         <h3 style="margin-bottom: 0.5rem;">Connect Your Wallet</h3>
                         <p>Connect your wallet to view your mining balance and claim earnings</p>
-                        <button class="btn btn-primary" onclick="openWalletModal()" style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="openWalletModal(); return false;" style="margin-top: 1rem;">
                             ₿ Connect Wallet
                         </button>
                     </div>
@@ -642,14 +642,52 @@
         window.openWalletModal = function() {
             console.log('🔵 openWalletModal called')
             
-            // Use official AppKit modal
-            if (window.openConnectModal && typeof window.openConnectModal === 'function' && window.walletModalReady) {
-                window.openConnectModal()
-            } else if (window.modal && typeof window.modal.open === 'function') {
-                window.modal.open()
-            } else {
-                alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
-            }
+            // Return immediately to prevent blocking - use requestAnimationFrame for next frame
+            requestAnimationFrame(() => {
+                // Use requestIdleCallback if available, otherwise setTimeout
+                const scheduleOpen = (callback) => {
+                    if (window.requestIdleCallback) {
+                        requestIdleCallback(callback, { timeout: 100 })
+                    } else {
+                        setTimeout(callback, 0)
+                    }
+                }
+                
+                scheduleOpen(() => {
+                    try {
+                        // Use official AppKit modal
+                        if (window.openConnectModal && typeof window.openConnectModal === 'function' && window.walletModalReady) {
+                            window.openConnectModal()
+                        } else if (window.modal && typeof window.modal.open === 'function') {
+                            window.modal.open()
+                        } else {
+                            // Show loading state instead of blocking alert
+                            const btn = document.getElementById('walletConnectBtn')
+                            if (btn) {
+                                const originalText = btn.textContent
+                                btn.textContent = '⏳ Loading...'
+                                btn.disabled = true
+                                
+                                // Retry after a short delay
+                                setTimeout(() => {
+                                    if (window.walletModalReady && window.openConnectModal) {
+                                        window.openConnectModal()
+                                    } else {
+                                        btn.textContent = originalText
+                                        btn.disabled = false
+                                        alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
+                                    }
+                                }, 500)
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error in openWalletModal:', error)
+                    }
+                })
+            })
+            
+            // Return false to prevent any default behavior
+            return false
         }
         
         window.disconnectWallet = function() {

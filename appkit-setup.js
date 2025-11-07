@@ -80,22 +80,35 @@ async function initAppKit() {
         
         // Set up global functions
         window.openConnectModal = () => {
-            try {
-                if (modal && typeof modal.open === 'function') {
-                    // Use setTimeout to prevent blocking the click handler
-                    setTimeout(() => {
-                        modal.open()
-                    }, 0)
-                } else {
-                    console.error('Modal not ready')
-                    alert('Wallet connection not ready. Please refresh the page.')
+            // Use requestIdleCallback or setTimeout to ensure non-blocking
+            const openModal = () => {
+                try {
+                    if (modal && typeof modal.open === 'function') {
+                        // Open modal asynchronously without blocking
+                        if (window.requestIdleCallback) {
+                            requestIdleCallback(() => modal.open(), { timeout: 50 })
+                        } else {
+                            setTimeout(() => modal.open(), 0)
+                        }
+                    } else {
+                        console.error('Modal not ready')
+                        // Don't block with alert - just log
+                        console.warn('Wallet connection not ready. Please wait a moment.')
+                    }
+                } catch (error) {
+                    console.error('Error opening modal:', error)
+                    // Don't show alert for module import errors, just log them
+                    if (!error.message?.includes('W3mFrameProviderSingleton') && !error.message?.includes('does not provide an export')) {
+                        console.error('Error connecting wallet:', error.message)
+                    }
                 }
-            } catch (error) {
-                console.error('Error opening modal:', error)
-                // Don't show alert for module import errors, just log them
-                if (!error.message.includes('W3mFrameProviderSingleton') && !error.message.includes('does not provide an export')) {
-                    alert('Error connecting wallet: ' + error.message)
-                }
+            }
+            
+            // Schedule to run in next event loop cycle
+            if (window.requestIdleCallback) {
+                requestIdleCallback(openModal, { timeout: 100 })
+            } else {
+                setTimeout(openModal, 0)
             }
         }
         
