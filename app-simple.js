@@ -210,16 +210,32 @@ function setupContracts() {
     const signer = window.signer
     if (!signer) {
         console.warn('⚠️ Cannot setup contracts - no signer available')
+        console.warn('📋 window.signer:', window.signer)
+        return
+    }
+    
+    if (typeof ethers === 'undefined') {
+        console.warn('⚠️ Cannot setup contracts - ethers.js not available')
         return
     }
     
     console.log('📋 Setting up contract instances...')
     console.log('📋 Contract address:', CONTRACT_ADDRESS)
-    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
-    usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer)
-    console.log('✅ Contracts set up successfully')
-    console.log('✅ Contract instance:', !!contract)
-    console.log('✅ USDT Contract instance:', !!usdtContract)
+    console.log('📋 Signer type:', typeof signer)
+    
+    try {
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
+        usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer)
+        console.log('✅ Contracts set up successfully')
+        console.log('✅ Contract instance:', !!contract)
+        console.log('✅ USDT Contract instance:', !!usdtContract)
+        console.log('✅ Contract address:', contract.address)
+    } catch (error) {
+        console.error('❌ Error setting up contracts:', error)
+        console.error('Error details:', error.message)
+        contract = null
+        usdtContract = null
+    }
 }
 
 // Update dashboard
@@ -243,19 +259,46 @@ async function updateDashboard() {
     // Make sure ethers is available
     if (typeof ethers === 'undefined') {
         console.error('❌ ethers.js is not available!')
-        alert('⚠️ ethers.js not loaded. Please refresh the page.')
+        console.log('⏳ Waiting for ethers.js...')
+        // Wait a bit and try again
+        setTimeout(() => {
+            if (typeof ethers !== 'undefined') {
+                updateDashboard()
+            }
+        }, 500)
         return
     }
     
-    // Make sure contract is set up
+    // Make sure contract is set up - try multiple times if needed
     if (!contract) {
         console.log('⚠️ Contract not initialized, setting up...')
-        setupContracts()
-        if (!contract) {
-            console.error('❌ Failed to setup contract')
-            console.error('📋 Signer available:', !!window.signer)
+        console.log('📋 Signer available:', !!window.signer)
+        console.log('📋 Provider available:', !!window.provider)
+        
+        if (!window.signer) {
+            console.error('❌ No signer available - cannot setup contract')
+            console.log('⏳ Waiting for signer...')
+            // Wait a bit and try again
+            setTimeout(() => {
+                if (window.signer) {
+                    updateDashboard()
+                }
+            }, 1000)
             return
         }
+        
+        setupContracts()
+        
+        if (!contract) {
+            console.error('❌ Failed to setup contract after setupContracts() call')
+            console.log('⏳ Retrying in 1 second...')
+            setTimeout(() => {
+                updateDashboard()
+            }, 1000)
+            return
+        }
+        
+        console.log('✅ Contract initialized successfully')
     }
     
     try {
