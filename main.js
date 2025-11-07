@@ -2,10 +2,17 @@
 // Following official guide: https://docs.reown.com/appkit/javascript/core/installation
 // Using ES modules from CDN (esm.sh) for vanilla JavaScript without npm/build tools
 
+console.log('📦 main.js module loading started...')
+
 // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
+console.log('📦 Importing createAppKit...')
 import { createAppKit } from 'https://esm.sh/@reown/appkit@1.8.12'
+
+console.log('📦 Importing WagmiAdapter...')
 // Try using @latest for WagmiAdapter to avoid @wagmi/core version conflicts
 import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
+
+console.log('✅ All imports loaded successfully')
 // Import watchAccount dynamically to avoid 404 errors
 let watchAccount = null
 
@@ -40,10 +47,12 @@ const projectId = '82dc70494a3772c5807c04ceae640981'
 export const networks = [bsc]
 
 // 2. Set up Wagmi adapter
+console.log('🔧 Creating WagmiAdapter...')
 const wagmiAdapter = new WagmiAdapter({
   projectId,
   networks
 })
+console.log('✅ WagmiAdapter created:', wagmiAdapter)
 
 // 3. Configure the metadata
 const metadata = {

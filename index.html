@@ -952,8 +952,8 @@
     </script>
     
     <!-- Load AppKit Setup (Official Reown AppKit UI with wallet list, search, email/Google) -->
-    <!-- Cache busting: Add ?v=3 to force reload after fixes -->
-    <script type="module" src="main.js?v=3"></script>
+    <!-- Cache busting: Add ?v=4 to force reload after fixes -->
+    <script type="module" src="main.js?v=4" onload="console.log('✅ main.js script loaded')" onerror="console.error('❌ Failed to load main.js:', event)"></script>
     
     <!-- Load ethers.js for contract interactions -->
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" 
