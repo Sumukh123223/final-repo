@@ -162,9 +162,9 @@
     <!-- WalletConnect Setup - Inline to avoid CORS issues -->
     <script type="module">
         // Reown AppKit - WalletConnect Implementation
-        // Use stable version to avoid W3mFrameProviderSingleton errors
-        import { createAppKit } from 'https://esm.sh/@reown/appkit@1.5.0'
-        import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@1.0.0'
+        // Use unpkg with explicit ESM paths to avoid module resolution errors
+        import { createAppKit } from 'https://unpkg.com/@reown/appkit@1.5.0/dist/index.esm.js'
+        import { WagmiAdapter } from 'https://unpkg.com/@reown/appkit-adapter-wagmi@1.0.0/dist/index.esm.js'
 
         // Define BSC network manually
         const bsc = {
