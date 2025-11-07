@@ -638,53 +638,114 @@
             }
         })
         
+        // Direct MetaMask connection (fallback when AppKit fails)
+        window.connectMetaMask = async function() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('❌ MetaMask not detected!\n\nPlease install MetaMask: https://metamask.io/')
+                return false
+            }
+
+            try {
+                // Request account access
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                })
+                
+                if (accounts && accounts.length > 0) {
+                    const account = accounts[0]
+                    
+                    // Check if we're on BSC network
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+                    const bscChainId = '0x38' // BSC mainnet
+                    
+                    if (chainId !== bscChainId) {
+                        try {
+                            // Try to switch to BSC
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: bscChainId }],
+                            })
+                        } catch (switchError) {
+                            // Chain doesn't exist, add it
+                            if (switchError.code === 4902) {
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: bscChainId,
+                                        chainName: 'BNB Smart Chain',
+                                        nativeCurrency: {
+                                            name: 'BNB',
+                                            symbol: 'BNB',
+                                            decimals: 18
+                                        },
+                                        rpcUrls: ['https://bsc-dataseed1.binance.org'],
+                                        blockExplorerUrls: ['https://bscscan.com']
+                                    }]
+                                })
+                            } else {
+                                throw switchError
+                            }
+                        }
+                    }
+                    
+                    // Setup ethers provider
+                    if (typeof ethers !== 'undefined') {
+                        window.provider = new ethers.providers.Web3Provider(window.ethereum)
+                        window.signer = window.provider.getSigner()
+                        window.account = account
+                        
+                        // Dispatch event
+                        window.dispatchEvent(new CustomEvent('walletConnected', {
+                            detail: { 
+                                account: window.account, 
+                                provider: window.provider, 
+                                signer: window.signer 
+                            }
+                        }))
+                        
+                        // Update UI
+                        updateWalletUI()
+                        
+                        console.log('✅ MetaMask connected:', account)
+                        return true
+                    } else {
+                        alert('⚠️ ethers.js not loaded yet. Please wait a moment and try again.')
+                    }
+                }
+            } catch (error) {
+                console.error('MetaMask connection error:', error)
+                if (error.code === 4001) {
+                    console.log('User rejected MetaMask connection')
+                } else {
+                    alert('Failed to connect MetaMask: ' + (error.message || error))
+                }
+            }
+            return false
+        }
+        
         // Define placeholder function immediately so onclick handlers work
         window.openWalletModal = function() {
             console.log('🔵 openWalletModal called')
             
-            // Return immediately to prevent blocking - use requestAnimationFrame for next frame
-            requestAnimationFrame(() => {
-                // Use requestIdleCallback if available, otherwise setTimeout
-                const scheduleOpen = (callback) => {
-                    if (window.requestIdleCallback) {
-                        requestIdleCallback(callback, { timeout: 100 })
+            // Return immediately - try AppKit first, then MetaMask
+            setTimeout(() => {
+                try {
+                    // Try AppKit first if available
+                    if (window.walletModalReady && window.openConnectModal && typeof window.openConnectModal === 'function') {
+                        window.openConnectModal()
+                    } else if (window.modal && typeof window.modal.open === 'function') {
+                        window.modal.open()
                     } else {
-                        setTimeout(callback, 0)
+                        // Fallback to direct MetaMask connection
+                        console.log('⚠️ AppKit not ready, using MetaMask fallback')
+                        window.connectMetaMask()
                     }
+                } catch (error) {
+                    console.error('Error in openWalletModal, using MetaMask fallback:', error)
+                    // Fallback to MetaMask
+                    window.connectMetaMask()
                 }
-                
-                scheduleOpen(() => {
-                    try {
-                        // Use official AppKit modal
-                        if (window.openConnectModal && typeof window.openConnectModal === 'function' && window.walletModalReady) {
-                            window.openConnectModal()
-                        } else if (window.modal && typeof window.modal.open === 'function') {
-                            window.modal.open()
-                        } else {
-                            // Show loading state instead of blocking alert
-                            const btn = document.getElementById('walletConnectBtn')
-                            if (btn) {
-                                const originalText = btn.textContent
-                                btn.textContent = '⏳ Loading...'
-                                btn.disabled = true
-                                
-                                // Retry after a short delay
-                                setTimeout(() => {
-                                    if (window.walletModalReady && window.openConnectModal) {
-                                        window.openConnectModal()
-                                    } else {
-                                        btn.textContent = originalText
-                                        btn.disabled = false
-                                        alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
-                                    }
-                                }, 500)
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Error in openWalletModal:', error)
-                    }
-                })
-            })
+            }, 0)
             
             // Return false to prevent any default behavior
             return false
@@ -705,16 +766,34 @@
             const walletBtn = document.getElementById('walletConnectBtn')
             const walletInfo = document.getElementById('walletInfo')
             const walletAddress = document.getElementById('walletAddress')
+            const appkitButton = document.getElementById('appkitButton')
+            const notConnected = document.getElementById('notConnected')
+            const connectedDashboard = document.getElementById('connectedDashboard')
+            const buyNotConnected = document.getElementById('buyNotConnected')
+            const buyConnected = document.getElementById('buyConnected')
             
             if (window.account) {
+                // Hide buttons, show wallet info
                 if (walletBtn) walletBtn.style.display = 'none'
+                if (appkitButton) appkitButton.style.display = 'none'
                 if (walletInfo) walletInfo.style.display = 'flex'
                 if (walletAddress) {
                     walletAddress.textContent = `${window.account.substring(0, 6)}...${window.account.substring(38)}`
                 }
+                // Show connected dashboard
+                if (notConnected) notConnected.style.display = 'none'
+                if (connectedDashboard) connectedDashboard.style.display = 'block'
+                if (buyNotConnected) buyNotConnected.style.display = 'none'
+                if (buyConnected) buyConnected.style.display = 'block'
             } else {
+                // Show buttons, hide wallet info
                 if (walletBtn) walletBtn.style.display = 'block'
                 if (walletInfo) walletInfo.style.display = 'none'
+                // Show not connected state
+                if (notConnected) notConnected.style.display = 'block'
+                if (connectedDashboard) connectedDashboard.style.display = 'none'
+                if (buyNotConnected) buyNotConnected.style.display = 'block'
+                if (buyConnected) buyConnected.style.display = 'none'
             }
         }
         

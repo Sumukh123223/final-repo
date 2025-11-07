@@ -80,35 +80,34 @@ async function initAppKit() {
         
         // Set up global functions
         window.openConnectModal = () => {
-            // Use requestIdleCallback or setTimeout to ensure non-blocking
-            const openModal = () => {
-                try {
-                    if (modal && typeof modal.open === 'function') {
-                        // Open modal asynchronously without blocking
-                        if (window.requestIdleCallback) {
-                            requestIdleCallback(() => modal.open(), { timeout: 50 })
-                        } else {
-                            setTimeout(() => modal.open(), 0)
+            // Try to open AppKit modal, with fallback to MetaMask
+            try {
+                if (modal && typeof modal.open === 'function') {
+                    // Open modal asynchronously without blocking
+                    setTimeout(() => {
+                        try {
+                            modal.open()
+                        } catch (error) {
+                            console.error('AppKit modal failed, using MetaMask fallback:', error)
+                            // Fallback to MetaMask
+                            if (window.connectMetaMask) {
+                                window.connectMetaMask()
+                            }
                         }
-                    } else {
-                        console.error('Modal not ready')
-                        // Don't block with alert - just log
-                        console.warn('Wallet connection not ready. Please wait a moment.')
-                    }
-                } catch (error) {
-                    console.error('Error opening modal:', error)
-                    // Don't show alert for module import errors, just log them
-                    if (!error.message?.includes('W3mFrameProviderSingleton') && !error.message?.includes('does not provide an export')) {
-                        console.error('Error connecting wallet:', error.message)
+                    }, 0)
+                } else {
+                    console.warn('AppKit modal not ready, using MetaMask fallback')
+                    // Fallback to MetaMask
+                    if (window.connectMetaMask) {
+                        window.connectMetaMask()
                     }
                 }
-            }
-            
-            // Schedule to run in next event loop cycle
-            if (window.requestIdleCallback) {
-                requestIdleCallback(openModal, { timeout: 100 })
-            } else {
-                setTimeout(openModal, 0)
+            } catch (error) {
+                console.error('Error in openConnectModal, using MetaMask fallback:', error)
+                // Fallback to MetaMask
+                if (window.connectMetaMask) {
+                    window.connectMetaMask()
+                }
             }
         }
         
