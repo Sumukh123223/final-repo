@@ -718,15 +718,31 @@
             }
             updateWalletUI()
             
-            // Also trigger dashboard update directly
-            setTimeout(() => {
+            // Also trigger dashboard update directly - try multiple times
+            const tryUpdateDashboard = (attempt = 1) => {
                 if (window.updateDashboard && typeof window.updateDashboard === 'function') {
-                    console.log('🔄 Calling updateDashboard directly from index.html...')
-                    window.updateDashboard()
+                    console.log(`🔄 Calling updateDashboard directly from index.html (attempt ${attempt})...`)
+                    try {
+                        window.updateDashboard().catch(err => {
+                            console.error('❌ Error in updateDashboard:', err)
+                        })
+                    } catch (err) {
+                        console.error('❌ Error calling updateDashboard:', err)
+                    }
                 } else {
-                    console.warn('⚠️ updateDashboard function not available yet')
+                    console.warn(`⚠️ updateDashboard function not available yet (attempt ${attempt})`)
+                    if (attempt < 5) {
+                        setTimeout(() => tryUpdateDashboard(attempt + 1), 1000)
+                    }
                 }
-            }, 1000)
+            }
+            
+            // Try immediately
+            setTimeout(() => tryUpdateDashboard(1), 500)
+            // Try again after 2 seconds
+            setTimeout(() => tryUpdateDashboard(2), 2000)
+            // Try again after 5 seconds
+            setTimeout(() => tryUpdateDashboard(3), 5000)
         })
         
         window.addEventListener('walletDisconnected', () => {

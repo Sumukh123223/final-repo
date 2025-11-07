@@ -216,9 +216,18 @@ function setupContracts() {
 
 // Update dashboard
 async function updateDashboard() {
+    console.log('🔄 updateDashboard() called')
+    console.log('📋 Current state:', {
+        account: window.account,
+        hasProvider: !!window.provider,
+        hasSigner: !!window.signer,
+        hasContract: !!contract
+    })
+    
     const account = window.account
     if (!account) {
         console.log('⚠️ Cannot update dashboard - no account connected')
+        console.log('📋 window.account:', window.account)
         return
     }
     
@@ -504,9 +513,11 @@ function setupReferralSystem() {
     }
 }
 
-// Make functions globally available
+// Make functions globally available IMMEDIATELY
 window.updateDashboard = updateDashboard
 window.claimRewards = claimRewards
+
+console.log('✅ Made updateDashboard globally available:', typeof window.updateDashboard)
 
 // Auto-refresh dashboard every 30 seconds if connected
 let dashboardRefreshInterval = null
