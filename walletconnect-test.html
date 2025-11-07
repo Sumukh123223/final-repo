@@ -159,8 +159,144 @@
         }
     </script>
 
-    <!-- Load AppKit (WalletConnect) -->
-    <script type="module" src="main.js"></script>
+    <!-- WalletConnect Setup - Inline to avoid CORS issues -->
+    <script type="module">
+        // Reown AppKit - WalletConnect Implementation
+        import { createAppKit } from 'https://esm.sh/@reown/appkit@latest'
+        import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
+
+        // Define BSC network manually
+        const bsc = {
+          id: 56,
+          name: 'BNB Smart Chain',
+          nativeCurrency: {
+            decimals: 18,
+            name: 'BNB',
+            symbol: 'BNB',
+          },
+          rpcUrls: {
+            default: {
+              http: ['https://bsc-dataseed1.binance.org'],
+            },
+            public: {
+              http: ['https://bsc-dataseed1.binance.org'],
+            },
+          },
+          blockExplorers: {
+            default: {
+              name: 'BscScan',
+              url: 'https://bscscan.com',
+            },
+          },
+        }
+
+        const projectId = '82dc70494a3772c5807c04ceae640981'
+        const networks = [bsc]
+
+        // Set up Wagmi adapter
+        const wagmiAdapter = new WagmiAdapter({
+          projectId,
+          networks
+        })
+
+        // Configure metadata
+        const metadata = {
+          name: 'WalletConnect Test',
+          description: 'WalletConnect Test Page',
+          url: window.location.origin,
+          icons: ['https://files.reown.com/reown-social-card.png']
+        }
+
+        // Create the modal
+        let modal
+        let wagmiConfig
+
+        try {
+          modal = createAppKit({
+            adapters: [wagmiAdapter],
+            networks: [bsc],
+            metadata,
+            projectId,
+            features: {
+              analytics: true
+            }
+          })
+          
+          wagmiConfig = wagmiAdapter.wagmiConfig
+          console.log('✅ AppKit modal created successfully')
+        } catch (error) {
+          console.error('❌ Error creating AppKit modal:', error)
+          modal = null
+          wagmiConfig = wagmiAdapter?.wagmiConfig || null
+        }
+
+        // Make modal globally available
+        window.modal = modal
+        window.wagmiConfig = wagmiConfig
+        window.walletModalReady = !!modal
+
+        // Set up global functions
+        window.openConnectModal = () => {
+          try {
+            if (modal && typeof modal.open === 'function') {
+              modal.open()
+            } else {
+              alert('⚠️ WalletConnect is not ready. Please refresh the page.')
+            }
+          } catch (error) {
+            console.error('Error opening modal:', error)
+            alert('Error connecting wallet: ' + error.message)
+          }
+        }
+
+        window.openWalletModal = window.openConnectModal
+
+        // Listen for account changes
+        import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
+          const { watchAccount } = wagmiCore
+          
+          if (wagmiConfig && watchAccount) {
+            watchAccount(wagmiConfig, {
+              onChange(account) {
+                if (account && account.isConnected && account.address) {
+                  window.account = account.address
+                  
+                  const publicClient = wagmiConfig.getPublicClient()
+                  wagmiConfig.getWalletClient().then((walletClient) => {
+                    if (typeof ethers !== 'undefined') {
+                      window.provider = new ethers.providers.Web3Provider(walletClient.transport)
+                      window.signer = window.provider.getSigner()
+                    } else {
+                      window.provider = publicClient
+                      window.signer = walletClient
+                    }
+                    
+                    window.dispatchEvent(new CustomEvent('walletConnected', {
+                      detail: { 
+                        account: window.account, 
+                        provider: window.provider, 
+                        signer: window.signer 
+                      }
+                    }))
+                  }).catch((error) => {
+                    console.error('Error getting wallet client:', error)
+                  })
+                } else {
+                  window.account = null
+                  window.provider = null
+                  window.signer = null
+                  window.dispatchEvent(new CustomEvent('walletDisconnected'))
+                }
+              }
+            })
+            console.log('✅ Account watcher set up')
+          }
+        }).catch((error) => {
+          console.warn('⚠️ Could not load watchAccount:', error)
+        })
+
+        console.log('✅ WalletConnect initialized')
+    </script>
 
     <!-- Wallet Functions -->
     <script>
@@ -231,6 +367,11 @@
             updateUI()
         })
         
+        window.addEventListener('walletDisconnected', () => {
+            console.log('✅ Wallet disconnected event received')
+            updateUI()
+        })
+        
         // Check connection status periodically
         setInterval(() => {
             updateUI()
@@ -243,4 +384,3 @@
     </script>
 </body>
 </html>
-
