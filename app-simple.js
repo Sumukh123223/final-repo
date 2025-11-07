@@ -216,12 +216,13 @@ function setupContracts() {
 
 // Update dashboard
 async function updateDashboard() {
-    console.log('🔄 updateDashboard() called')
+    console.log('🔄 ========== updateDashboard() CALLED ==========')
     console.log('📋 Current state:', {
         account: window.account,
         hasProvider: !!window.provider,
         hasSigner: !!window.signer,
-        hasContract: !!contract
+        hasContract: !!contract,
+        hasEthers: typeof ethers !== 'undefined'
     })
     
     const account = window.account
@@ -231,12 +232,20 @@ async function updateDashboard() {
         return
     }
     
+    // Make sure ethers is available
+    if (typeof ethers === 'undefined') {
+        console.error('❌ ethers.js is not available!')
+        alert('⚠️ ethers.js not loaded. Please refresh the page.')
+        return
+    }
+    
     // Make sure contract is set up
     if (!contract) {
         console.log('⚠️ Contract not initialized, setting up...')
         setupContracts()
         if (!contract) {
             console.error('❌ Failed to setup contract')
+            console.error('📋 Signer available:', !!window.signer)
             return
         }
     }
@@ -254,10 +263,12 @@ async function updateDashboard() {
         }
         
         // Get balance and rewards
-        console.log('📞 Calling contract.balanceOf...')
+        console.log('📞 Calling contract.balanceOf with account:', account)
         const balance = await contract.balanceOf(account)
-        console.log('📞 Calling contract.calculateRewards...')
+        console.log('✅ balanceOf call successful')
+        console.log('📞 Calling contract.calculateRewards with account:', account)
         const rewards = await contract.calculateRewards(account)
+        console.log('✅ calculateRewards call successful')
         
         console.log('📊 Raw balance from contract:', balance.toString())
         console.log('📊 Raw rewards from contract:', rewards.toString())
@@ -513,11 +524,16 @@ function setupReferralSystem() {
     }
 }
 
-// Make functions globally available IMMEDIATELY
-window.updateDashboard = updateDashboard
-window.claimRewards = claimRewards
-
-console.log('✅ Made updateDashboard globally available:', typeof window.updateDashboard)
+// Make functions globally available IMMEDIATELY - do this right after function definition
+// This ensures it's available as soon as the script loads
+if (typeof window !== 'undefined') {
+    window.updateDashboard = updateDashboard
+    window.claimRewards = claimRewards
+    console.log('✅ Made updateDashboard globally available:', typeof window.updateDashboard)
+    console.log('✅ updateDashboard function:', window.updateDashboard)
+} else {
+    console.error('❌ window is not available!')
+}
 
 // Auto-refresh dashboard every 30 seconds if connected
 let dashboardRefreshInterval = null
