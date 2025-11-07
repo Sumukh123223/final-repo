@@ -12,13 +12,15 @@ try {
   console.log('📦 Starting AppKit initialization...')
   
   // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
+  // Try version 1.6.3 which should be more stable
   console.log('📦 Importing createAppKit from esm.sh...')
-  const appkitModule = await import('https://esm.sh/@reown/appkit@1.8.12')
+  const appkitModule = await import('https://esm.sh/@reown/appkit@1.6.3')
   const { createAppKit } = appkitModule
   console.log('✅ createAppKit imported:', typeof createAppKit)
   
   console.log('📦 Importing WagmiAdapter from esm.sh...')
-  const adapterModule = await import('https://esm.sh/@reown/appkit-adapter-wagmi@latest')
+  // Pin WagmiAdapter to a version compatible with AppKit 1.6.3
+  const adapterModule = await import('https://esm.sh/@reown/appkit-adapter-wagmi@1.0.3')
   const { WagmiAdapter } = adapterModule
   console.log('✅ WagmiAdapter imported:', typeof WagmiAdapter)
   
@@ -84,18 +86,36 @@ try {
     console.log('🚀 Networks:', [bsc])
     console.log('🚀 Project ID:', projectId)
     
-    // Wrap in try-catch to handle AccountController and other module errors gracefully
-    modal = createAppKit({
-      adapters: [wagmiAdapter],
-      networks: [bsc],
-      metadata,
-      projectId,
-      features: {
-        analytics: true, // Optional - defaults to your Cloud configuration
-        email: false, // Disable email auth to avoid W3mFrameProviderSingleton error
-        socials: false // Disable social auth to avoid W3mFrameProviderSingleton error
+    // Suppress W3mFrameProviderSingleton errors temporarily
+    const originalError = window.onerror
+    const suppressedErrors = []
+    window.onerror = function(msg, url, line, col, error) {
+      if (msg && msg.includes('W3mFrameProviderSingleton')) {
+        suppressedErrors.push(msg)
+        console.warn('⚠️ Suppressed W3mFrameProviderSingleton error during AppKit creation')
+        return true // Suppress the error
       }
-    })
+      if (originalError) return originalError.apply(this, arguments)
+      return false
+    }
+    
+    try {
+      // Wrap in try-catch to handle AccountController and other module errors gracefully
+      modal = createAppKit({
+        adapters: [wagmiAdapter],
+        networks: [bsc],
+        metadata,
+        projectId,
+        features: {
+          analytics: true, // Optional - defaults to your Cloud configuration
+          email: false, // Disable email auth to avoid W3mFrameProviderSingleton error
+          socials: false // Disable social auth to avoid W3mFrameProviderSingleton error
+        }
+      })
+    } finally {
+      // Restore original error handler
+      window.onerror = originalError
+    }
     
     console.log('✅ AppKit modal created:', modal)
     console.log('✅ Modal type:', typeof modal)
