@@ -94,52 +94,41 @@ async function initAppKit() {
             window.walletModalReady = false
         }
         
-        // Set up global functions
+        // Set up global functions - WalletConnect ONLY
         window.openConnectModal = () => {
-            console.log('🔵 openConnectModal called - AppKit modal')
+            console.log('🔵 openConnectModal called - WalletConnect AppKit modal')
             
-            // Force AppKit modal to open - don't fallback immediately
+            // Force WalletConnect AppKit modal to open - NO MetaMask fallback
             try {
                 if (modal) {
-                    console.log('✅ AppKit modal exists, opening...')
+                    console.log('✅ WalletConnect AppKit modal exists, opening...')
                     // Open modal directly
                     if (typeof modal.open === 'function') {
                         modal.open()
-                        console.log('✅ AppKit modal.open() called')
+                        console.log('✅ WalletConnect modal.open() called')
                         return
                     } else {
                         console.error('❌ modal.open is not a function:', typeof modal.open)
+                        alert('⚠️ WalletConnect is not ready. Please refresh the page and wait for WalletConnect to load.')
+                        return
                     }
                 } else {
-                    console.error('❌ AppKit modal is null/undefined')
-                }
-                
-                // Only use MetaMask as last resort after checking AppKit
-                console.warn('⚠️ AppKit modal not available, checking MetaMask as last resort...')
-                if (window.connectMetaMask && typeof window.ethereum !== 'undefined') {
-                    console.log('⚠️ Using MetaMask fallback')
-                    window.connectMetaMask()
-                } else {
-                    alert('⚠️ Wallet connection not ready. Please wait a moment and try again, or install MetaMask.')
+                    console.error('❌ WalletConnect AppKit modal is null/undefined')
+                    alert('⚠️ WalletConnect is not ready. Please refresh the page and wait for WalletConnect to load.')
+                    return
                 }
             } catch (error) {
-                console.error('❌ Error opening AppKit modal:', error)
-                // Only fallback if it's a critical error
-                if (error.message && !error.message.includes('W3mFrameProviderSingleton')) {
-                    console.warn('⚠️ AppKit error, trying MetaMask fallback')
-                    if (window.connectMetaMask && typeof window.ethereum !== 'undefined') {
-                        window.connectMetaMask()
+                console.error('❌ Error opening WalletConnect modal:', error)
+                // Try to open anyway, even with module errors
+                try {
+                    if (modal && typeof modal.open === 'function') {
+                        modal.open()
+                    } else {
+                        alert('⚠️ WalletConnect is not ready. Please refresh the page and wait for WalletConnect to load.')
                     }
-                } else {
-                    // Module import errors - try to open anyway, AppKit might still work
-                    console.log('⚠️ Module import error detected, but trying to open modal anyway...')
-                    try {
-                        if (modal && typeof modal.open === 'function') {
-                            modal.open()
-                        }
-                    } catch (e) {
-                        console.error('❌ Failed to open modal after error:', e)
-                    }
+                } catch (e) {
+                    console.error('❌ Failed to open WalletConnect modal:', e)
+                    alert('⚠️ WalletConnect is not ready. Please refresh the page and wait for WalletConnect to load.')
                 }
             }
         }

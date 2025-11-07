@@ -638,137 +638,47 @@
             }
         })
         
-        // Direct MetaMask connection (fallback when AppKit fails)
-        window.connectMetaMask = async function() {
-            if (typeof window.ethereum === 'undefined') {
-                alert('❌ MetaMask not detected!\n\nPlease install MetaMask: https://metamask.io/')
-                return false
-            }
-
-            try {
-                // Request account access
-                const accounts = await window.ethereum.request({ 
-                    method: 'eth_requestAccounts' 
-                })
-                
-                if (accounts && accounts.length > 0) {
-                    const account = accounts[0]
-                    
-                    // Check if we're on BSC network
-                    const chainId = await window.ethereum.request({ method: 'eth_chainId' })
-                    const bscChainId = '0x38' // BSC mainnet
-                    
-                    if (chainId !== bscChainId) {
-                        try {
-                            // Try to switch to BSC
-                            await window.ethereum.request({
-                                method: 'wallet_switchEthereumChain',
-                                params: [{ chainId: bscChainId }],
-                            })
-                        } catch (switchError) {
-                            // Chain doesn't exist, add it
-                            if (switchError.code === 4902) {
-                                await window.ethereum.request({
-                                    method: 'wallet_addEthereumChain',
-                                    params: [{
-                                        chainId: bscChainId,
-                                        chainName: 'BNB Smart Chain',
-                                        nativeCurrency: {
-                                            name: 'BNB',
-                                            symbol: 'BNB',
-                                            decimals: 18
-                                        },
-                                        rpcUrls: ['https://bsc-dataseed1.binance.org'],
-                                        blockExplorerUrls: ['https://bscscan.com']
-                                    }]
-                                })
-                            } else {
-                                throw switchError
-                            }
-                        }
-                    }
-                    
-                    // Setup ethers provider
-                    if (typeof ethers !== 'undefined') {
-                        window.provider = new ethers.providers.Web3Provider(window.ethereum)
-                        window.signer = window.provider.getSigner()
-                        window.account = account
-                        
-                        // Dispatch event
-                        window.dispatchEvent(new CustomEvent('walletConnected', {
-                            detail: { 
-                                account: window.account, 
-                                provider: window.provider, 
-                                signer: window.signer 
-                            }
-                        }))
-                        
-                        // Update UI
-                        updateWalletUI()
-                        
-                        console.log('✅ MetaMask connected:', account)
-                        return true
-                    } else {
-                        alert('⚠️ ethers.js not loaded yet. Please wait a moment and try again.')
-                    }
-                }
-            } catch (error) {
-                console.error('MetaMask connection error:', error)
-                if (error.code === 4001) {
-                    console.log('User rejected MetaMask connection')
-                } else {
-                    alert('Failed to connect MetaMask: ' + (error.message || error))
-                }
-            }
-            return false
-        }
-        
-        // Define placeholder function immediately so onclick handlers work
+        // Define placeholder function immediately - WalletConnect ONLY
         window.openWalletModal = function() {
-            console.log('🔵 openWalletModal called')
+            console.log('🔵 openWalletModal called - WalletConnect ONLY')
             
-            // Try AppKit first - wait a bit if not ready
-            const tryOpenAppKit = () => {
+            // Try WalletConnect AppKit - wait a bit if not ready
+            const tryOpenWalletConnect = () => {
                 // Check if AppKit is ready
                 if (window.walletModalReady && window.openConnectModal && typeof window.openConnectModal === 'function') {
-                    console.log('✅ AppKit ready, opening...')
+                    console.log('✅ WalletConnect AppKit ready, opening...')
                     window.openConnectModal()
                     return true
                 } else if (window.modal && typeof window.modal.open === 'function') {
-                    console.log('✅ AppKit modal exists, opening directly...')
+                    console.log('✅ WalletConnect modal exists, opening directly...')
                     try {
                         window.modal.open()
                         return true
                     } catch (e) {
-                        console.error('❌ Error opening modal directly:', e)
+                        console.error('❌ Error opening WalletConnect modal directly:', e)
                     }
                 }
                 return false
             }
             
             // Try immediately
-            if (tryOpenAppKit()) {
+            if (tryOpenWalletConnect()) {
                 return false
             }
             
-            // If not ready, wait a bit for AppKit to initialize (give it time)
-            console.log('⏳ AppKit not ready, waiting...')
+            // If not ready, wait for WalletConnect to initialize
+            console.log('⏳ WalletConnect not ready, waiting...')
             let attempts = 0
-            const maxAttempts = 10 // Wait up to 1 second (10 * 100ms)
+            const maxAttempts = 20 // Wait up to 2 seconds (20 * 100ms) for WalletConnect
             
             const checkAndOpen = setInterval(() => {
                 attempts++
-                if (tryOpenAppKit()) {
+                if (tryOpenWalletConnect()) {
                     clearInterval(checkAndOpen)
                 } else if (attempts >= maxAttempts) {
                     clearInterval(checkAndOpen)
-                    // Only after waiting, use MetaMask as last resort
-                    console.warn('⚠️ AppKit not ready after waiting, using MetaMask as last resort')
-                    if (window.connectMetaMask && typeof window.ethereum !== 'undefined') {
-                        window.connectMetaMask()
-                    } else {
-                        alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
-                    }
+                    // WalletConnect ONLY - no MetaMask fallback
+                    alert('⚠️ WalletConnect is loading... Please wait a moment and try again.\n\nMake sure WalletConnect is fully loaded before connecting.')
                 }
             }, 100)
             
