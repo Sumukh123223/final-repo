@@ -1128,10 +1128,25 @@
     <!-- Load app-simple.js after a short delay to ensure AppKit is ready -->
     <script>
         setTimeout(function() {
+            // Remove any existing app-simple.js script to avoid conflicts
+            const existingScript = document.querySelector('script[src="app-simple.js"]')
+            if (existingScript) {
+                existingScript.remove()
+                console.log('🔄 Removed existing app-simple.js script')
+            }
+            
             const appScript = document.createElement('script')
-            appScript.src = 'app-simple.js'
+            appScript.src = 'app-simple.js?v=' + Date.now() // Add cache busting
             appScript.onload = function() {
-                console.log('✅ app-simple.js loaded')
+                console.log('✅ app-simple.js loaded (with cache bust)')
+                // Make sure updateDashboard is available
+                setTimeout(() => {
+                    if (window.updateDashboard) {
+                        console.log('✅ updateDashboard is available after load')
+                    } else {
+                        console.warn('⚠️ updateDashboard not available after load')
+                    }
+                }, 500)
             }
             appScript.onerror = function() {
                 console.error('❌ Failed to load app-simple.js')

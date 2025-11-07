@@ -1,5 +1,6 @@
 // CleanSpark - Simple App (Works without npm/build tools)
 // Uses ethers.js from CDN and direct MetaMask connection
+// Version: 2.0 - Updated getUserHoldings support
 
 // Contract Configuration  
 const CONTRACT_ADDRESS = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
@@ -91,9 +92,9 @@ function initApp() {
         console.log('📋 Event details:', e.detail)
         // Use window variables to avoid conflicts
         if (e.detail) {
-            window.account = e.detail.account
-            window.provider = e.detail.provider
-            window.signer = e.detail.signer
+        window.account = e.detail.account
+        window.provider = e.detail.provider
+        window.signer = e.detail.signer
             console.log('✅ Set window.account:', window.account)
             console.log('✅ Set window.provider:', !!window.provider)
             console.log('✅ Set window.signer:', !!window.signer)
@@ -102,7 +103,7 @@ function initApp() {
         // Wait a bit for contracts to initialize, then update dashboard
         setTimeout(() => {
             console.log('🔄 Calling updateDashboard from walletConnected event...')
-            updateDashboard()
+        updateDashboard()
         }, 500)
     })
     
@@ -194,7 +195,7 @@ async function checkExistingConnection() {
         // Also update again after 3 seconds to ensure it's loaded
         setTimeout(() => {
             console.log('🔄 Updating dashboard for existing connection (second attempt)...')
-            updateDashboard()
+        updateDashboard()
         }, 3000)
     } else {
         console.log('⚠️ No existing wallet connection found')
@@ -224,8 +225,8 @@ function setupContracts() {
     console.log('📋 Signer type:', typeof signer)
     
     try {
-        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
-        usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer)
+    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
+    usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer)
         console.log('✅ Contracts set up successfully')
         console.log('✅ Contract instance:', !!contract)
         console.log('✅ USDT Contract instance:', !!usdtContract)
@@ -609,8 +610,8 @@ function setupReferralSystem() {
 // Make functions globally available IMMEDIATELY - do this right after function definition
 // This ensures it's available as soon as the script loads
 if (typeof window !== 'undefined') {
-    window.updateDashboard = updateDashboard
-    window.claimRewards = claimRewards
+window.updateDashboard = updateDashboard
+window.claimRewards = claimRewards
     console.log('✅ Made updateDashboard globally available:', typeof window.updateDashboard)
     console.log('✅ updateDashboard function:', window.updateDashboard)
 } else {
