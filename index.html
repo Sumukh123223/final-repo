@@ -458,7 +458,7 @@
                         <h3>Claim Earnings</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 1rem;">Withdraw your mining profits instantly</p>
                         <button class="claim-btn" id="claimBtn">₿ Claim Mining Earnings</button>
-                        <button class="btn btn-secondary" onclick="if(window.updateDashboard) { window.updateDashboard(); alert('🔄 Refreshing balance...'); }" style="margin-top: 0.5rem; width: 100%;">
+                        <button class="btn btn-secondary" onclick="if(window.updateDashboard) { window.updateDashboard(); if(window.showCustomModal) { window.showCustomModal('Refreshing', 'Refreshing balance...', 'info'); } else { alert('🔄 Refreshing balance...'); } }" style="margin-top: 0.5rem; width: 100%;">
                             🔄 Refresh Balance
                         </button>
                     </div>
@@ -861,22 +861,30 @@
         // Make handleBuyTokens globally available
         window.handleBuyTokens = handleBuyTokens
         
-        // Contract address functions
-        function copyContractAddress() {
-            const address = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
-            navigator.clipboard.writeText(address).then(() => {
-                alert('✅ Contract address copied to clipboard!')
-            }).catch(() => {
-                // Fallback for older browsers
-                const textarea = document.createElement('textarea')
-                textarea.value = address
-                document.body.appendChild(textarea)
-                textarea.select()
-                document.execCommand('copy')
-                document.body.removeChild(textarea)
-                alert('✅ Contract address copied to clipboard!')
-            })
-        }
+            // Contract address functions
+            function copyContractAddress() {
+                const address = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
+                navigator.clipboard.writeText(address).then(() => {
+                    if (window.showCustomModal) {
+                        window.showCustomModal('Copied!', 'Contract address copied to clipboard!', 'success')
+                    } else {
+                        alert('✅ Contract address copied to clipboard!')
+                    }
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textarea = document.createElement('textarea')
+                    textarea.value = address
+                    document.body.appendChild(textarea)
+                    textarea.select()
+                    document.execCommand('copy')
+                    document.body.removeChild(textarea)
+                    if (window.showCustomModal) {
+                        window.showCustomModal('Copied!', 'Contract address copied to clipboard!', 'success')
+                    } else {
+                        alert('✅ Contract address copied to clipboard!')
+                    }
+                })
+            }
         
         function addToMetaMask() {
             const address = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
@@ -896,19 +904,35 @@
                             image: tokenImage,
                         },
                     },
-                }).then((success) => {
-                    if (success) {
-                        alert('✅ CleanSpark token added to MetaMask!')
+                    }).then((success) => {
+                        if (success) {
+                            if (window.showCustomModal) {
+                                window.showCustomModal('Success!', 'CleanSpark token added to MetaMask!', 'success')
+                            } else {
+                                alert('✅ CleanSpark token added to MetaMask!')
+                            }
+                        } else {
+                            if (window.showCustomModal) {
+                                window.showCustomModal('Not Added', 'Token was not added. Please try again.', 'warning')
+                            } else {
+                                alert('⚠️ Token was not added. Please try again.')
+                            }
+                        }
+                    }).catch((error) => {
+                        console.error('Error adding token:', error)
+                        if (window.showCustomModal) {
+                            window.showCustomModal('Error', 'Error adding token: ' + error.message, 'error')
+                        } else {
+                            alert('❌ Error adding token: ' + error.message)
+                        }
+                    })
+                } else {
+                    if (window.showCustomModal) {
+                        window.showCustomModal('MetaMask Not Found', 'MetaMask is not installed. Please install MetaMask first.', 'warning')
                     } else {
-                        alert('⚠️ Token was not added. Please try again.')
+                        alert('⚠️ MetaMask is not installed. Please install MetaMask first.')
                     }
-                }).catch((error) => {
-                    console.error('Error adding token:', error)
-                    alert('❌ Error adding token: ' + error.message)
-                })
-            } else {
-                alert('⚠️ MetaMask is not installed. Please install MetaMask first.')
-            }
+                }
         }
         
         function addToTrustWallet() {
@@ -922,8 +946,13 @@
             // Try to open Trust Wallet app
             window.open(trustWalletLink, '_blank')
             
-            // Also show instructions
-            alert('📱 Adding to Trust Wallet:\n\n1. Click OK to open Trust Wallet\n2. Or manually add token:\n   - Open Trust Wallet\n   - Go to Settings → Wallets\n   - Add Custom Token\n   - Enter contract address:\n   ' + address)
+                // Also show instructions
+                const trustWalletMessage = 'Adding to Trust Wallet:\n\n1. Click OK to open Trust Wallet\n2. Or manually add token:\n   - Open Trust Wallet\n   - Go to Settings → Wallets\n   - Add Custom Token\n   - Enter contract address:\n   ' + address
+                if (window.showCustomModal) {
+                    window.showCustomModal('Add to Trust Wallet', trustWalletMessage, 'info')
+                } else {
+                    alert('📱 ' + trustWalletMessage)
+                }
         }
         
         console.log('✅ Wallet connect placeholder functions initialized')

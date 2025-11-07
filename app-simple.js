@@ -459,22 +459,43 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
             const bnbAmount = (amountInWei.mul(ethers.utils.parseEther('1'))).div(bnbRate)
             
             if (referrer) {
+                if (window.showCustomModal) {
+                    window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
+                } else {
+                    alert('⏳ Transaction submitted! Please wait for confirmation...')
+                }
                 const tx = await contract.buyTokensWithBNBAndReferral(referrer, { value: bnbAmount })
-                alert('⏳ Transaction submitted! Please wait for confirmation...')
                 await tx.wait()
-                alert('✅ Tokens purchased successfully!')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Success!', 'Tokens purchased successfully!', 'success')
+                } else {
+                    alert('✅ Tokens purchased successfully!')
+                }
             } else {
+                if (window.showCustomModal) {
+                    window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
+                } else {
+                    alert('⏳ Transaction submitted! Please wait for confirmation...')
+                }
                 const tx = await contract.buyTokensWithBNB({ value: bnbAmount })
-                alert('⏳ Transaction submitted! Please wait for confirmation...')
                 await tx.wait()
-                alert('✅ Tokens purchased successfully!')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Success!', 'Tokens purchased successfully!', 'success')
+                } else {
+                    alert('✅ Tokens purchased successfully!')
+                }
             }
         } else {
             // Buy with USDT
             // Check balance
             const usdtBalance = await usdtContract.balanceOf(account)
             if (usdtBalance.lt(amountInWei)) {
-                alert(`❌ Insufficient USDT balance!\n\nYou have: ${ethers.utils.formatEther(usdtBalance)} USDT\nRequired: ${usdtAmount} USDT`)
+                const message = `Insufficient USDT balance!\n\nYou have: ${ethers.utils.formatEther(usdtBalance)} USDT\nRequired: ${usdtAmount} USDT`
+                if (window.showCustomModal) {
+                    window.showCustomModal('Insufficient Balance', message, 'error')
+                } else {
+                    alert(`❌ ${message}`)
+                }
                 return
             }
             
