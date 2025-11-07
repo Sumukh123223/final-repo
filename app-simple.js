@@ -112,8 +112,12 @@ function setupButtons() {
 async function checkExistingConnection() {
     // Check if WalletConnect or other provider is already connected
     if (window.account && window.provider && window.signer) {
+        console.log('✅ Existing connection found, setting up contracts...')
         setupContracts()
-        updateDashboard()
+        // Wait a bit for contracts to initialize
+        setTimeout(() => {
+            updateDashboard()
+        }, 1000)
     }
 }
 
@@ -129,17 +133,31 @@ function setupContracts() {
 // Update dashboard
 async function updateDashboard() {
     const account = window.account
-    if (!account || !contract) {
-        console.log('⚠️ Cannot update dashboard - account or contract missing', { account: !!account, contract: !!contract })
+    if (!account) {
+        console.log('⚠️ Cannot update dashboard - no account connected')
         return
+    }
+    
+    // Make sure contract is set up
+    if (!contract) {
+        console.log('⚠️ Contract not initialized, setting up...')
+        setupContracts()
+        if (!contract) {
+            console.error('❌ Failed to setup contract')
+            return
+        }
     }
     
     try {
         console.log('🔄 Updating dashboard for account:', account)
+        console.log('📋 Contract address:', CONTRACT_ADDRESS)
         
         // Get balance and rewards
         const balance = await contract.balanceOf(account)
         const rewards = await contract.calculateRewards(account)
+        
+        console.log('📊 Raw balance from contract:', balance.toString())
+        console.log('📊 Raw rewards from contract:', rewards.toString())
         
         // Try to get locked amount if getUserHoldings exists
         let lockedAmount = ethers.BigNumber.from(0)
@@ -303,8 +321,17 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
             }
         }
         
-        // Update dashboard
-        setTimeout(() => updateDashboard(), 2000)
+        // Update dashboard - wait longer for blockchain to update
+        console.log('✅ Purchase successful, updating dashboard...')
+        setTimeout(() => {
+            updateDashboard()
+        }, 3000) // Wait 3 seconds
+        
+        // Also update again after 10 seconds to ensure balance is updated
+        setTimeout(() => {
+            console.log('🔄 Refreshing dashboard again after purchase...')
+            updateDashboard()
+        }, 10000)
         
     } catch (error) {
         console.error('Buy tokens error:', error)
