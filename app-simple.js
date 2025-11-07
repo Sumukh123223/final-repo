@@ -575,15 +575,36 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
             if (!hasEnough) {
                 const balanceFormatted = ethers.utils.formatEther(usdtBalance)
                 const message = `Insufficient USDT balance!\n\nYou have: ${balanceFormatted} USDT\nRequired: ${usdtAmount} USDT`
-                console.log('❌ Insufficient balance - showing error modal')
-                if (window.showCustomModal) {
-                    window.showCustomModal('Insufficient Balance', message, 'error')
-                } else if (window.originalAlert) {
-                    window.originalAlert(`❌ ${message}`)
-                } else {
-                    alert(`❌ ${message}`)
-                }
-                console.log('✅ Error modal shown, returning')
+                console.log('❌ Insufficient balance detected')
+                console.log('📋 Balance formatted:', balanceFormatted)
+                console.log('📋 Required:', usdtAmount)
+                console.log('📋 Attempting to show error modal...')
+                
+                // Use setTimeout to ensure modal shows even if there's a blocking issue
+                setTimeout(() => {
+                    if (window.showCustomModal && typeof window.showCustomModal === 'function') {
+                        console.log('📋 Calling showCustomModal...')
+                        try {
+                            window.showCustomModal('Insufficient Balance', message, 'error')
+                            console.log('✅ showCustomModal called successfully')
+                        } catch (modalError) {
+                            console.error('❌ Error showing modal:', modalError)
+                            if (window.originalAlert) {
+                                window.originalAlert(`❌ ${message}`)
+                            } else {
+                                alert(`❌ ${message}`)
+                            }
+                        }
+                    } else if (window.originalAlert) {
+                        console.log('📋 Using originalAlert fallback')
+                        window.originalAlert(`❌ ${message}`)
+                    } else {
+                        console.log('📋 Using native alert fallback')
+                        alert(`❌ ${message}`)
+                    }
+                }, 100)
+                
+                console.log('✅ Error handling initiated, returning')
                 return
             }
             console.log('✅ Balance check passed')
