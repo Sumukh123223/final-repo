@@ -5,19 +5,16 @@
 // Immediately log that module started - this should appear first
 console.log('📦 main.js module loading started...')
 console.log('📦 Current URL:', window.location.href)
-console.log('📦 Module type:', typeof window !== 'undefined' ? 'browser' : 'node')
 
 // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
-console.log('📦 About to import createAppKit...')
+// Note: Import statements are hoisted, so they execute before any code
 import { createAppKit } from 'https://esm.sh/@reown/appkit@1.8.12'
-console.log('✅ createAppKit imported')
-
-console.log('📦 About to import WagmiAdapter...')
-// Try using @latest for WagmiAdapter to avoid @wagmi/core version conflicts
 import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
-console.log('✅ WagmiAdapter imported')
 
+// This will only execute if imports succeed
 console.log('✅ All imports loaded successfully')
+console.log('✅ createAppKit:', typeof createAppKit)
+console.log('✅ WagmiAdapter:', typeof WagmiAdapter)
 // Import watchAccount dynamically to avoid 404 errors
 let watchAccount = null
 
