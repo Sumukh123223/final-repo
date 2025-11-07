@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WalletConnect Test</title>
+    <title>MetaMask Test</title>
     <!-- 
     ⚠️ IMPORTANT: This file MUST be served via HTTP server (not file://)
     
@@ -127,8 +127,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔷 WalletConnect Test</h1>
-        <p class="subtitle">Test WalletConnect connection functionality</p>
+        <h1>🦊 MetaMask Test</h1>
+        <p class="subtitle">Test MetaMask wallet connection</p>
         
         <div id="status" class="status disconnected">
             ⚠️ Not Connected
@@ -154,7 +154,7 @@
         </button>
         
         <div id="loading" class="loading" style="display: none;">
-            Loading WalletConnect...
+            Connecting MetaMask...
         </div>
     </div>
 
@@ -195,144 +195,88 @@
         })
     </script>
 
-    <!-- WalletConnect Setup - Inline to avoid CORS issues -->
-    <script type="module">
-        // Reown AppKit - WalletConnect Implementation
-        // Use esm.sh with error suppression
-        import { createAppKit } from 'https://esm.sh/@reown/appkit@latest'
-        import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
+    <!-- MetaMask Only - WalletConnect Removed -->
+    <script>
+        // MetaMask-only connection - WalletConnect/AppKit removed
+        window.modal = null
+        window.wagmiConfig = null
+        window.walletModalReady = false
 
-        // Define BSC network manually
-        const bsc = {
-          id: 56,
-          name: 'BNB Smart Chain',
-          nativeCurrency: {
-            decimals: 18,
-            name: 'BNB',
-            symbol: 'BNB',
-          },
-          rpcUrls: {
-            default: {
-              http: ['https://bsc-dataseed1.binance.org'],
-            },
-            public: {
-              http: ['https://bsc-dataseed1.binance.org'],
-            },
-          },
-          blockExplorers: {
-            default: {
-              name: 'BscScan',
-              url: 'https://bscscan.com',
-            },
-          },
-        }
-
-        const projectId = '82dc70494a3772c5807c04ceae640981'
-        const networks = [bsc]
-
-        // Set up Wagmi adapter
-        const wagmiAdapter = new WagmiAdapter({
-          projectId,
-          networks
-        })
-
-        // Configure metadata
-        const metadata = {
-          name: 'WalletConnect Test',
-          description: 'WalletConnect Test Page',
-          url: window.location.origin,
-          icons: ['https://files.reown.com/reown-social-card.png']
-        }
-
-        // Create the modal
-        let modal
-        let wagmiConfig
-
-        try {
-          modal = createAppKit({
-            adapters: [wagmiAdapter],
-            networks: [bsc],
-            metadata,
-            projectId,
-            features: {
-              analytics: false // Disable analytics to avoid module errors
+        // MetaMask connection function
+        async function connectMetaMask() {
+          try {
+            const hasEthereum = typeof window !== 'undefined' && typeof window.ethereum !== 'undefined'
+            if (!hasEthereum) {
+              alert('MetaMask not found. Please install MetaMask to continue.')
+              return
             }
-          })
-          
-          wagmiConfig = wagmiAdapter.wagmiConfig
-          console.log('✅ AppKit modal created successfully')
-        } catch (error) {
-          console.error('❌ Error creating AppKit modal:', error)
-          modal = null
-          wagmiConfig = wagmiAdapter?.wagmiConfig || null
-        }
 
-        // Make modal globally available
-        window.modal = modal
-        window.wagmiConfig = wagmiConfig
-        window.walletModalReady = !!modal
+            const providerCandidate = window.ethereum.providers?.find?.(p => p && p.isMetaMask) || window.ethereum
+            if (!providerCandidate || (!providerCandidate.isMetaMask && !window.ethereum.isMetaMask)) {
+              alert('MetaMask provider not detected. Please ensure MetaMask is enabled.')
+              return
+            }
+
+            // Request accounts
+            const accounts = await providerCandidate.request({ method: 'eth_requestAccounts' })
+            if (!accounts || accounts.length === 0) {
+              alert('No accounts returned from MetaMask.')
+              return
+            }
+
+            // Set global state
+            window.account = accounts[0]
+
+            // Prefer ethers if available
+            if (typeof ethers !== 'undefined' && ethers?.providers?.Web3Provider) {
+              window.provider = new ethers.providers.Web3Provider(providerCandidate)
+              window.signer = window.provider.getSigner()
+            } else {
+              window.provider = providerCandidate
+              window.signer = providerCandidate
+            }
+
+            // Listen for account/network changes
+            try {
+              providerCandidate.removeAllListeners?.('accountsChanged')
+              providerCandidate.on?.('accountsChanged', (accs) => {
+                if (Array.isArray(accs) && accs[0]) {
+                  window.account = accs[0]
+                } else {
+                  window.account = null
+                }
+                updateUI()
+              })
+              providerCandidate.removeAllListeners?.('chainChanged')
+              providerCandidate.on?.('chainChanged', () => {
+                updateUI()
+              })
+            } catch (_) {}
+
+            // Dispatch event for any listeners
+            window.dispatchEvent(new CustomEvent('walletConnected', {
+              detail: {
+                account: window.account,
+                provider: window.provider,
+                signer: window.signer
+              }
+            }))
+
+            updateUI()
+          } catch (error) {
+            console.error('Error connecting MetaMask:', error)
+            alert('Error connecting MetaMask: ' + (error?.message || String(error)))
+          }
+        }
 
         // Set up global functions
         window.openConnectModal = () => {
-          try {
-            if (modal && typeof modal.open === 'function') {
-              modal.open()
-            } else {
-              alert('⚠️ WalletConnect is not ready. Please refresh the page.')
-            }
-          } catch (error) {
-            console.error('Error opening modal:', error)
-            alert('Error connecting wallet: ' + error.message)
-          }
+          connectMetaMask()
         }
 
         window.openWalletModal = window.openConnectModal
 
-        // Listen for account changes
-        import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
-          const { watchAccount } = wagmiCore
-          
-          if (wagmiConfig && watchAccount) {
-            watchAccount(wagmiConfig, {
-              onChange(account) {
-                if (account && account.isConnected && account.address) {
-                  window.account = account.address
-                  
-                  const publicClient = wagmiConfig.getPublicClient()
-                  wagmiConfig.getWalletClient().then((walletClient) => {
-                    if (typeof ethers !== 'undefined') {
-                      window.provider = new ethers.providers.Web3Provider(walletClient.transport)
-                      window.signer = window.provider.getSigner()
-                    } else {
-                      window.provider = publicClient
-                      window.signer = walletClient
-                    }
-                    
-                    window.dispatchEvent(new CustomEvent('walletConnected', {
-                      detail: { 
-                        account: window.account, 
-                        provider: window.provider, 
-                        signer: window.signer 
-                      }
-                    }))
-                  }).catch((error) => {
-                    console.error('Error getting wallet client:', error)
-                  })
-                } else {
-                  window.account = null
-                  window.provider = null
-                  window.signer = null
-                  window.dispatchEvent(new CustomEvent('walletDisconnected'))
-                }
-              }
-            })
-            console.log('✅ Account watcher set up')
-          }
-        }).catch((error) => {
-          console.warn('⚠️ Could not load watchAccount:', error)
-        })
-
-        console.log('✅ WalletConnect initialized')
+        console.log('✅ MetaMask-only wallet connection initialized')
     </script>
 
     <!-- Wallet Functions -->
@@ -370,27 +314,23 @@
             }
         }
         
-        // Open wallet modal
+        // Open wallet modal - MetaMask only
         function openWalletModal() {
-            console.log('🔵 Opening WalletConnect modal...')
+            console.log('🔵 Connecting MetaMask...')
             
-            if (window.modal && typeof window.modal.open === 'function') {
-                window.modal.open()
-            } else if (window.openConnectModal && typeof window.openConnectModal === 'function') {
+            if (window.openConnectModal && typeof window.openConnectModal === 'function') {
                 window.openConnectModal()
             } else {
-                alert('⚠️ WalletConnect is loading... Please wait a moment and try again.')
+                alert('⚠️ MetaMask connection not ready. Please refresh the page.')
             }
         }
         
         // Disconnect wallet
         function disconnectWallet() {
-            if (window.modal && typeof window.modal.close === 'function') {
-                window.modal.close()
-            }
             window.account = null
             window.provider = null
             window.signer = null
+            window.dispatchEvent(new CustomEvent('walletDisconnected'))
             updateUI()
             console.log('✅ Wallet disconnected')
         }
@@ -417,7 +357,7 @@
         // Initial UI update
         setTimeout(updateUI, 2000)
         
-        console.log('✅ WalletConnect test page loaded')
+        console.log('✅ MetaMask test page loaded')
     </script>
 </body>
 </html>
