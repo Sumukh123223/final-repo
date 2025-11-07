@@ -725,10 +725,13 @@
                         if (cancelBtn) cancelBtn.style.display = 'none'
                     }
                     
-                    // Show modal
+                // Show modal - use requestAnimationFrame to ensure DOM is ready
+                requestAnimationFrame(() => {
                     modal.style.display = 'flex'
                     document.body.style.overflow = 'hidden'
-                }
+                    console.log('✅ Modal displayed:', title)
+                })
+            }
                 
                 // Make functions globally available
                 window.showCustomModal = showCustomModal
