@@ -39,6 +39,14 @@ function waitForEthers() {
     if (typeof ethers !== 'undefined') {
         console.log('✅ ethers.js available in app-simple.js')
         initApp()
+        // Make sure updateDashboard is available immediately after init
+        setTimeout(() => {
+            if (typeof updateDashboard === 'function') {
+                window.updateDashboard = updateDashboard
+                window.claimRewards = claimRewards
+                console.log('✅ Made updateDashboard globally available (early):', typeof window.updateDashboard)
+            }
+        }, 100)
     } else {
         console.log('⏳ Waiting for ethers.js in app-simple.js...')
         setTimeout(waitForEthers, 100)

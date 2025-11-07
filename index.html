@@ -720,18 +720,34 @@
             
             // Also trigger dashboard update directly - try multiple times
             const tryUpdateDashboard = (attempt = 1) => {
+                console.log(`🔍 Checking for updateDashboard (attempt ${attempt})...`)
+                console.log(`🔍 window.updateDashboard exists:`, typeof window.updateDashboard)
+                console.log(`🔍 window.updateDashboard type:`, typeof window.updateDashboard)
+                
                 if (window.updateDashboard && typeof window.updateDashboard === 'function') {
                     console.log(`🔄 Calling updateDashboard directly from index.html (attempt ${attempt})...`)
+                    console.log(`🔍 Function details:`, window.updateDashboard.toString().substring(0, 100))
                     try {
-                        window.updateDashboard().catch(err => {
-                            console.error('❌ Error in updateDashboard:', err)
-                        })
+                        const result = window.updateDashboard()
+                        if (result && typeof result.then === 'function') {
+                            result.then(() => {
+                                console.log(`✅ updateDashboard promise resolved (attempt ${attempt})`)
+                            }).catch(err => {
+                                console.error(`❌ Error in updateDashboard promise (attempt ${attempt}):`, err)
+                                console.error('Error stack:', err.stack)
+                            })
+                        } else {
+                            console.log(`✅ updateDashboard called (not async) (attempt ${attempt})`)
+                        }
                     } catch (err) {
-                        console.error('❌ Error calling updateDashboard:', err)
+                        console.error(`❌ Error calling updateDashboard (attempt ${attempt}):`, err)
+                        console.error('Error stack:', err.stack)
+                        console.error('Error message:', err.message)
                     }
                 } else {
                     console.warn(`⚠️ updateDashboard function not available yet (attempt ${attempt})`)
-                    if (attempt < 5) {
+                    console.warn(`⚠️ Available window functions:`, Object.keys(window).filter(k => k.toLowerCase().includes('update') || k.toLowerCase().includes('dashboard')))
+                    if (attempt < 10) {
                         setTimeout(() => tryUpdateDashboard(attempt + 1), 1000)
                     }
                 }
@@ -743,6 +759,8 @@
             setTimeout(() => tryUpdateDashboard(2), 2000)
             // Try again after 5 seconds
             setTimeout(() => tryUpdateDashboard(3), 5000)
+            // Try again after 10 seconds (in case app-simple.js loads late)
+            setTimeout(() => tryUpdateDashboard(4), 10000)
         })
         
         window.addEventListener('walletDisconnected', () => {
