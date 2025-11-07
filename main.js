@@ -3,14 +3,37 @@
 // Using ES modules from CDN (esm.sh) for vanilla JavaScript without npm/build tools
 
 import { createAppKit } from 'https://esm.sh/@reown/appkit@latest'
-import { bsc } from 'https://esm.sh/@reown/appkit/networks@latest'
 import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
-import { watchAccount } from 'https://esm.sh/@wagmi/core@latest'
+
+// Define BSC network manually (networks import path causes 404 errors)
+const bsc = {
+  id: 56,
+  name: 'BNB Smart Chain',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'BNB',
+    symbol: 'BNB',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://bsc-dataseed1.binance.org'],
+    },
+    public: {
+      http: ['https://bsc-dataseed1.binance.org'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: 'BscScan',
+      url: 'https://bscscan.com',
+    },
+  },
+}
 
 // 1. Get a project ID at https://dashboard.reown.com
 const projectId = '82dc70494a3772c5807c04ceae640981'
 
-export const networks = [bsc]
+const networks = [bsc]
 
 // 2. Set up Wagmi adapter
 const wagmiAdapter = new WagmiAdapter({
@@ -27,23 +50,35 @@ const metadata = {
 }
 
 // 4. Create the modal
-export const modal = createAppKit({
-  adapters: [wagmiAdapter],
-  networks: [bsc],
-  metadata,
-  projectId,
-  features: {
-    analytics: true // Optional - defaults to your Cloud configuration
-  }
-})
+let modal
+let wagmiConfig
 
-// 5. Get wagmiConfig for contract interactions
-export const wagmiConfig = wagmiAdapter.wagmiConfig
+try {
+  modal = createAppKit({
+    adapters: [wagmiAdapter],
+    networks: [bsc],
+    metadata,
+    projectId,
+    features: {
+      analytics: true // Optional - defaults to your Cloud configuration
+    }
+  })
+  
+  // 5. Get wagmiConfig for contract interactions
+  wagmiConfig = wagmiAdapter.wagmiConfig
+  
+  console.log('✅ AppKit modal created successfully')
+} catch (error) {
+  console.error('❌ Error creating AppKit modal:', error)
+  // Set defaults even on error
+  modal = null
+  wagmiConfig = wagmiAdapter?.wagmiConfig || null
+}
 
 // Make modal globally available for HTML buttons
 window.modal = modal
 window.wagmiConfig = wagmiConfig
-window.walletModalReady = true
+window.walletModalReady = !!modal
 
 // Set up global functions for onclick handlers
 window.openConnectModal = () => {
@@ -97,47 +132,55 @@ window.openNetworkModal = () => {
   }
 }
 
-// Listen for account changes
-watchAccount(wagmiConfig, {
-  onChange(account) {
+// Listen for account changes - import watchAccount dynamically
+import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
+  const { watchAccount } = wagmiCore
+  
+  if (wagmiConfig && watchAccount) {
+    watchAccount(wagmiConfig, {
+      onChange(account) {
     if (account && account.isConnected && account.address) {
-      window.account = account.address
-      
-      // Get provider and signer from wagmi
-      const publicClient = wagmiConfig.getPublicClient()
-      wagmiConfig.getWalletClient().then((walletClient) => {
-        // Create ethers provider/signer from wagmi if ethers is available
-        if (typeof ethers !== 'undefined') {
-          // Convert wagmi client to ethers provider
-          window.provider = new ethers.providers.Web3Provider(walletClient.transport)
-          window.signer = window.provider.getSigner()
-        } else {
-          window.provider = publicClient
-          window.signer = walletClient
-        }
+        window.account = account.address
         
-        // Dispatch event for app-simple.js
-        window.dispatchEvent(new CustomEvent('walletConnected', {
-          detail: { 
-            account: window.account, 
-            provider: window.provider, 
-            signer: window.signer 
+        // Get provider and signer from wagmi
+        const publicClient = wagmiConfig.getPublicClient()
+        wagmiConfig.getWalletClient().then((walletClient) => {
+          // Create ethers provider/signer from wagmi if ethers is available
+          if (typeof ethers !== 'undefined') {
+            // Convert wagmi client to ethers provider
+            window.provider = new ethers.providers.Web3Provider(walletClient.transport)
+            window.signer = window.provider.getSigner()
+          } else {
+            window.provider = publicClient
+            window.signer = walletClient
           }
-        }))
-        
-        // Update UI
+          
+          // Dispatch event for app-simple.js
+          window.dispatchEvent(new CustomEvent('walletConnected', {
+            detail: { 
+              account: window.account, 
+              provider: window.provider, 
+              signer: window.signer 
+            }
+          }))
+          
+          // Update UI
+          updateWalletUI()
+        }).catch((error) => {
+          console.error('Error getting wallet client:', error)
+        })
+      } else {
+        window.account = null
+        window.provider = null
+        window.signer = null
         updateWalletUI()
-      }).catch((error) => {
-        console.error('Error getting wallet client:', error)
-      })
-    } else {
-      window.account = null
-      window.provider = null
-      window.signer = null
-      updateWalletUI()
+      }
     }
-  }
-})
+  })
+  }).catch((error) => {
+    console.warn('⚠️ Could not load watchAccount:', error)
+    // Wallet connection will still work via modal, just account watching won't work
+  })
 
 function updateWalletUI() {
   const appkitButton = document.getElementById('appkitButton')
