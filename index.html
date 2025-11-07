@@ -646,20 +646,42 @@
             
             // Try WalletConnect AppKit - wait a bit if not ready
             const tryOpenWalletConnect = () => {
-                // Check if AppKit is ready
-                if (window.walletModalReady && window.openConnectModal && typeof window.openConnectModal === 'function') {
-                    console.log('✅ WalletConnect AppKit ready, opening...')
-                    window.openConnectModal()
-                    return true
-                } else if (window.modal && typeof window.modal.open === 'function') {
+                // Check if AppKit is ready - try multiple ways
+                if (window.modal && typeof window.modal.open === 'function') {
                     console.log('✅ WalletConnect modal exists, opening directly...')
                     try {
                         window.modal.open()
                         return true
                     } catch (e) {
                         console.error('❌ Error opening WalletConnect modal directly:', e)
+                        // Try again with openConnectModal if available
+                        if (window.openConnectModal && typeof window.openConnectModal === 'function') {
+                            try {
+                                window.openConnectModal()
+                                return true
+                            } catch (e2) {
+                                console.error('❌ Error with openConnectModal:', e2)
+                            }
+                        }
+                    }
+                } else if (window.walletModalReady && window.openConnectModal && typeof window.openConnectModal === 'function') {
+                    console.log('✅ WalletConnect AppKit ready, opening via openConnectModal...')
+                    try {
+                        window.openConnectModal()
+                        return true
+                    } catch (e) {
+                        console.error('❌ Error with openConnectModal:', e)
                     }
                 }
+                
+                // Debug info
+                console.log('⏳ WalletConnect status:', {
+                    hasModal: !!window.modal,
+                    modalOpenType: typeof window.modal?.open,
+                    walletModalReady: window.walletModalReady,
+                    hasOpenConnectModal: typeof window.openConnectModal
+                })
+                
                 return false
             }
             
@@ -671,7 +693,7 @@
             // If not ready, wait for WalletConnect to initialize
             console.log('⏳ WalletConnect not ready, waiting...')
             let attempts = 0
-            const maxAttempts = 20 // Wait up to 2 seconds (20 * 100ms) for WalletConnect
+            const maxAttempts = 30 // Wait up to 3 seconds (30 * 100ms) for WalletConnect
             
             const checkAndOpen = setInterval(() => {
                 attempts++
@@ -680,7 +702,7 @@
                 } else if (attempts >= maxAttempts) {
                     clearInterval(checkAndOpen)
                     // WalletConnect ONLY - no MetaMask fallback
-                    alert('⚠️ WalletConnect is loading... Please wait a moment and try again.\n\nMake sure WalletConnect is fully loaded before connecting.')
+                    alert('⚠️ WalletConnect is loading... Please wait a moment and try again.\n\nIf this persists, refresh the page and wait for all scripts to load.')
                 }
             }, 100)
             
