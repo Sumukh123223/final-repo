@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WalletConnect Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        
+        .status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status.connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .wallet-info {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            word-break: break-all;
+        }
+        
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #333;
+            margin-top: 10px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .appkit-button {
+            margin: 20px 0;
+        }
+        
+        .loading {
+            color: #667eea;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔷 WalletConnect Test</h1>
+        <p class="subtitle">Test WalletConnect connection functionality</p>
+        
+        <div id="status" class="status disconnected">
+            ⚠️ Not Connected
+        </div>
+        
+        <div id="walletInfo" class="wallet-info" style="display: none;">
+            <strong>Connected Wallet:</strong>
+            <div id="walletAddress" class="wallet-address"></div>
+        </div>
+        
+        <!-- Official Reown AppKit Button -->
+        <div class="appkit-button">
+            <appkit-button id="appkitButton" style="display: none;"></appkit-button>
+        </div>
+        
+        <!-- Fallback Button -->
+        <button id="connectBtn" onclick="openWalletModal()">
+            🔷 Connect Wallet
+        </button>
+        
+        <button id="disconnectBtn" onclick="disconnectWallet()" style="display: none; background: #ef4444;">
+            Disconnect
+        </button>
+        
+        <div id="loading" class="loading" style="display: none;">
+            Loading WalletConnect...
+        </div>
+    </div>
+
+    <!-- Process polyfill for WalletConnect -->
+    <script>
+        if (typeof process === 'undefined') {
+            window.process = {
+                env: { NODE_ENV: 'production' },
+                version: '',
+                versions: {},
+                browser: true
+            }
+        }
+    </script>
+
+    <!-- Load AppKit (WalletConnect) -->
+    <script type="module" src="main.js"></script>
+
+    <!-- Wallet Functions -->
+    <script>
+        // Update UI based on connection status
+        function updateUI() {
+            const status = document.getElementById('status')
+            const walletInfo = document.getElementById('walletInfo')
+            const walletAddress = document.getElementById('walletAddress')
+            const connectBtn = document.getElementById('connectBtn')
+            const disconnectBtn = document.getElementById('disconnectBtn')
+            const appkitButton = document.getElementById('appkitButton')
+            
+            if (window.account) {
+                // Connected
+                status.className = 'status connected'
+                status.textContent = '✅ Connected'
+                walletInfo.style.display = 'block'
+                walletAddress.textContent = window.account
+                connectBtn.style.display = 'none'
+                disconnectBtn.style.display = 'block'
+                if (appkitButton) appkitButton.style.display = 'none'
+            } else {
+                // Not connected
+                status.className = 'status disconnected'
+                status.textContent = '⚠️ Not Connected'
+                walletInfo.style.display = 'none'
+                connectBtn.style.display = 'block'
+                disconnectBtn.style.display = 'none'
+                // Show AppKit button if available
+                if (appkitButton && window.walletModalReady) {
+                    appkitButton.style.display = 'block'
+                    connectBtn.style.display = 'none'
+                }
+            }
+        }
+        
+        // Open wallet modal
+        function openWalletModal() {
+            console.log('🔵 Opening WalletConnect modal...')
+            
+            if (window.modal && typeof window.modal.open === 'function') {
+                window.modal.open()
+            } else if (window.openConnectModal && typeof window.openConnectModal === 'function') {
+                window.openConnectModal()
+            } else {
+                alert('⚠️ WalletConnect is loading... Please wait a moment and try again.')
+            }
+        }
+        
+        // Disconnect wallet
+        function disconnectWallet() {
+            if (window.modal && typeof window.modal.close === 'function') {
+                window.modal.close()
+            }
+            window.account = null
+            window.provider = null
+            window.signer = null
+            updateUI()
+            console.log('✅ Wallet disconnected')
+        }
+        
+        // Listen for wallet connection events
+        window.addEventListener('walletConnected', (e) => {
+            console.log('✅ Wallet connected event received:', e.detail)
+            window.account = e.detail.account
+            window.provider = e.detail.provider
+            window.signer = e.detail.signer
+            updateUI()
+        })
+        
+        // Check connection status periodically
+        setInterval(() => {
+            updateUI()
+        }, 1000)
+        
+        // Initial UI update
+        setTimeout(updateUI, 2000)
+        
+        console.log('✅ WalletConnect test page loaded')
+    </script>
+</body>
+</html>
+
