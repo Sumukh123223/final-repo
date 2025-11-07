@@ -310,7 +310,11 @@ async function updateDashboard() {
         
         if (!contract) {
             console.error('❌ Contract not initialized!')
-            alert('⚠️ Contract not initialized. Please refresh the page.')
+            if (window.showCustomModal) {
+                window.showCustomModal('Contract Error', 'Contract not initialized. Please refresh the page.', 'error')
+            } else {
+                alert('⚠️ Contract not initialized. Please refresh the page.')
+            }
             return
         }
         
@@ -413,26 +417,35 @@ async function updateDashboard() {
         
         console.log('✅ Dashboard updated successfully')
         
-    } catch (error) {
-        console.error('❌ Dashboard update error:', error)
-        console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            data: error.data
-        })
-        alert('⚠️ Error loading dashboard: ' + (error.reason || error.message || 'Unknown error'))
-    }
+        } catch (error) {
+            console.error('❌ Dashboard update error:', error)
+            console.error('Error details:', {
+                message: error.message,
+                code: error.code,
+                data: error.data
+            })
+            const errorMsg = error.reason || error.message || 'Unknown error'
+            if (window.showCustomModal) {
+                window.showCustomModal('Dashboard Error', 'Error loading dashboard: ' + errorMsg, 'error')
+            } else {
+                alert('⚠️ Error loading dashboard: ' + errorMsg)
+            }
+        }
 }
 
 // Buy tokens function (called from HTML)
 window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
-    const account = window.account
-    const signer = window.signer
-    if (!account || !signer) {
-        alert('Please connect your wallet first!')
-        await window.connectWallet()
-        return
-    }
+        const account = window.account
+        const signer = window.signer
+        if (!account || !signer) {
+            if (window.showCustomModal) {
+                window.showCustomModal('Wallet Not Connected', 'Please connect your wallet first!', 'warning')
+            } else {
+                alert('Please connect your wallet first!')
+            }
+            await window.connectWallet()
+            return
+        }
     
     if (!contract) setupContracts()
     
@@ -468,38 +481,74 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
             // Check allowance
             const allowance = await usdtContract.allowance(account, CONTRACT_ADDRESS)
             if (allowance.lt(amountInWei)) {
-                const approveConfirm = confirm(
-                    `⚠️ USDT Approval Required\n\n` +
-                    `You need to approve USDT spending first.\n\n` +
-                    `Click OK to approve, then try buying again.`
-                )
-                
+                const approveConfirm = await new Promise((resolve) => {
+                    if (window.showCustomModal) {
+                        window.showCustomModal(
+                            'USDT Approval Required',
+                            'You need to approve USDT spending first.\n\nClick Confirm to approve, then try buying again.',
+                            'warning',
+                            resolve,
+                            true
+                        )
+                    } else {
+                        resolve(confirm('⚠️ USDT Approval Required\n\nYou need to approve USDT spending first.\n\nClick OK to approve, then try buying again.'))
+                    }
+                })
+
                 if (!approveConfirm) {
-                    alert('❌ Purchase cancelled. Approval is required.')
+                    if (window.showCustomModal) {
+                        window.showCustomModal('Purchase Cancelled', 'Approval is required to proceed with the purchase.', 'error')
+                    } else {
+                        alert('❌ Purchase cancelled. Approval is required.')
+                    }
                     return
                 }
                 
                 // Approve USDT
                 const approveAmount = amountInWei.mul(1000) // Approve 1000x
-                alert('⏳ Approving USDT... Please confirm in your wallet.')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Approving USDT', 'Please confirm the approval transaction in your wallet.', 'info')
+                } else {
+                    alert('⏳ Approving USDT... Please confirm in your wallet.')
+                }
                 const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, approveAmount)
                 await approveTx.wait()
-                alert('✅ USDT approved! You can now buy tokens.')
+                if (window.showCustomModal) {
+                    window.showCustomModal('USDT Approved', 'USDT has been approved! You can now buy tokens.', 'success')
+                } else {
+                    alert('✅ USDT approved! You can now buy tokens.')
+                }
             }
             
             // Buy tokens
-            if (referrer) {
-                alert('⏳ Purchasing tokens... Please confirm in your wallet.')
-                const tx = await contract.buyTokensWithReferral(amountInWei, referrer)
-                await tx.wait()
-                alert('✅ Tokens purchased successfully!')
-                localStorage.removeItem('referralAddress')
-            } else {
-                alert('⏳ Purchasing tokens... Please confirm in your wallet.')
-                const tx = await contract.buyTokens(amountInWei)
-                await tx.wait()
-                alert('✅ Tokens purchased successfully!')
-            }
+                if (referrer) {
+                    if (window.showCustomModal) {
+                        window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
+                    } else {
+                        alert('⏳ Purchasing tokens... Please confirm in your wallet.')
+                    }
+                    const tx = await contract.buyTokensWithReferral(amountInWei, referrer)
+                    await tx.wait()
+                    if (window.showCustomModal) {
+                        window.showCustomModal('Success!', 'Tokens purchased successfully!', 'success')
+                    } else {
+                        alert('✅ Tokens purchased successfully!')
+                    }
+                    localStorage.removeItem('referralAddress')
+                } else {
+                    if (window.showCustomModal) {
+                        window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
+                    } else {
+                        alert('⏳ Purchasing tokens... Please confirm in your wallet.')
+                    }
+                    const tx = await contract.buyTokens(amountInWei)
+                    await tx.wait()
+                    if (window.showCustomModal) {
+                        window.showCustomModal('Success!', 'Tokens purchased successfully!', 'success')
+                    } else {
+                        alert('✅ Tokens purchased successfully!')
+                    }
+                }
         }
         
         // Update dashboard - wait longer for blockchain to update
@@ -516,65 +565,108 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
         
     } catch (error) {
         console.error('Buy tokens error:', error)
-        if (error.message?.includes('user rejected') || error.message?.includes('User denied')) {
-            alert('❌ Transaction rejected by user.')
-        } else {
-            alert('❌ Error: ' + (error.reason || error.message))
-        }
+            if (error.message?.includes('user rejected') || error.message?.includes('User denied')) {
+                if (window.showCustomModal) {
+                    window.showCustomModal('Transaction Rejected', 'The transaction was rejected by user.', 'error')
+                } else {
+                    alert('❌ Transaction rejected by user.')
+                }
+            } else {
+                const errorMsg = error.reason || error.message || 'Unknown error'
+                if (window.showCustomModal) {
+                    window.showCustomModal('Error', errorMsg, 'error')
+                } else {
+                    alert('❌ Error: ' + errorMsg)
+                }
+            }
     }
 }
 
 // Sell tokens function
-window.sellTokens = async function(tokenAmount) {
-    const account = window.account
-    const signer = window.signer
-    if (!account || !signer) {
-        alert('Please connect your wallet first!')
-        return
+    window.sellTokens = async function(tokenAmount) {
+        const account = window.account
+        const signer = window.signer
+        if (!account || !signer) {
+            if (window.showCustomModal) {
+                window.showCustomModal('Wallet Not Connected', 'Please connect your wallet first!', 'warning')
+            } else {
+                alert('Please connect your wallet first!')
+            }
+            return
+        }
+
+        if (!contract) setupContracts()
+
+        try {
+            const amountInWei = ethers.utils.parseUnits(tokenAmount.toString(), 18)
+
+            if (window.showCustomModal) {
+                window.showCustomModal('Selling Tokens', 'Please confirm the transaction in your wallet.', 'info')
+            } else {
+                alert('⏳ Selling tokens... Please confirm in your wallet.')
+            }
+            const tx = await contract.sellTokens(amountInWei)
+            await tx.wait()
+            if (window.showCustomModal) {
+                window.showCustomModal('Success!', 'Tokens sold successfully!', 'success')
+            } else {
+                alert('✅ Tokens sold successfully!')
+            }
+
+            setTimeout(() => updateDashboard(), 2000)
+
+        } catch (error) {
+            console.error('Sell tokens error:', error)
+            const errorMsg = error.reason || error.message || 'Unknown error'
+            if (window.showCustomModal) {
+                window.showCustomModal('Error', errorMsg, 'error')
+            } else {
+                alert('❌ Error: ' + errorMsg)
+            }
+        }
     }
-    
-    if (!contract) setupContracts()
-    
-    try {
-        const amountInWei = ethers.utils.parseUnits(tokenAmount.toString(), 18)
-        
-        alert('⏳ Selling tokens... Please confirm in your wallet.')
-        const tx = await contract.sellTokens(amountInWei)
-        await tx.wait()
-        alert('✅ Tokens sold successfully!')
-        
-        setTimeout(() => updateDashboard(), 2000)
-        
-    } catch (error) {
-        console.error('Sell tokens error:', error)
-        alert('❌ Error: ' + (error.reason || error.message))
-    }
-}
 
 // Claim rewards function
-async function claimRewards() {
-    const account = window.account
-    const signer = window.signer
-    if (!account || !signer) {
-        alert('Please connect your wallet first!')
-        return
+    async function claimRewards() {
+        const account = window.account
+        const signer = window.signer
+        if (!account || !signer) {
+            if (window.showCustomModal) {
+                window.showCustomModal('Wallet Not Connected', 'Please connect your wallet first!', 'warning')
+            } else {
+                alert('Please connect your wallet first!')
+            }
+            return
+        }
+
+        if (!contract) setupContracts()
+
+        try {
+            if (window.showCustomModal) {
+                window.showCustomModal('Claiming Rewards', 'Please confirm the transaction in your wallet.', 'info')
+            } else {
+                alert('⏳ Claiming rewards... Please confirm in your wallet.')
+            }
+            const tx = await contract.claimRewards()
+            await tx.wait()
+            if (window.showCustomModal) {
+                window.showCustomModal('Success!', 'Rewards claimed successfully!', 'success')
+            } else {
+                alert('✅ Rewards claimed successfully!')
+            }
+
+            setTimeout(() => updateDashboard(), 2000)
+
+        } catch (error) {
+            console.error('Claim rewards error:', error)
+            const errorMsg = error.reason || error.message || 'Unknown error'
+            if (window.showCustomModal) {
+                window.showCustomModal('Error', errorMsg, 'error')
+            } else {
+                alert('❌ Error: ' + errorMsg)
+            }
+        }
     }
-    
-    if (!contract) setupContracts()
-    
-    try {
-        alert('⏳ Claiming rewards... Please confirm in your wallet.')
-        const tx = await contract.claimRewards()
-        await tx.wait()
-        alert('✅ Rewards claimed successfully!')
-        
-        setTimeout(() => updateDashboard(), 2000)
-        
-    } catch (error) {
-        console.error('Claim rewards error:', error)
-        alert('❌ Error: ' + (error.reason || error.message))
-    }
-}
 
 // Get referrer from URL
 function getReferrerAddress() {

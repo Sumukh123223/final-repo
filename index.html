@@ -27,6 +27,24 @@
         </p>
     </div>
     
+    <!-- Custom Modal/Popup -->
+    <div id="customModal" class="custom-modal" style="display: none;">
+        <div class="custom-modal-overlay" onclick="closeCustomModal()"></div>
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <span class="custom-modal-icon" id="modalIcon">ℹ️</span>
+                <h3 class="custom-modal-title" id="modalTitle">Notification</h3>
+                <button class="custom-modal-close" onclick="closeCustomModal()">&times;</button>
+            </div>
+            <div class="custom-modal-body">
+                <p id="modalMessage">This is a notification message.</p>
+            </div>
+            <div class="custom-modal-footer" id="modalFooter">
+                <button class="btn btn-primary" id="modalConfirmBtn" onclick="closeCustomModal()">OK</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
