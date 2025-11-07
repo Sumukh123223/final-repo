@@ -36,6 +36,22 @@ async function connectMetaMask() {
     const isMobile = isMobileDevice()
     
     if (!hasEthereum) {
+      // Check if page is opened as file://
+      const isFileProtocol = window.location.protocol === 'file:'
+      
+      if (isFileProtocol) {
+        alert('⚠️ IMPORTANT: File Protocol Detected!\n\n' +
+          'MetaMask cannot work with file:// URLs for security reasons.\n\n' +
+          '✅ SOLUTION:\n' +
+          '1. Open Terminal in this folder\n' +
+          '2. Run: ./start-server.sh\n' +
+          '   (or: python3 -m http.server 8000)\n' +
+          '3. Open browser to: http://localhost:8000\n' +
+          '4. Then try connecting again\n\n' +
+          'This will serve the site via HTTP, allowing MetaMask to work.')
+        return
+      }
+      
       if (isMobile) {
         const message = 'MetaMask not detected!\n\n' +
           '📱 For Mobile:\n' +
@@ -47,7 +63,7 @@ async function connectMetaMask() {
           'Install MetaMask browser extension'
         alert(message)
       } else {
-        alert('MetaMask not found. Please:\n\n1. Install MetaMask extension\n2. Refresh this page\n3. Make sure MetaMask is unlocked\n\nGet it at: https://metamask.io/download/')
+        alert('MetaMask not found. Please:\n\n1. Install MetaMask extension\n2. Refresh this page\n3. Make sure MetaMask is unlocked\n4. Make sure you\'re using http:// not file://\n\nGet it at: https://metamask.io/download/')
       }
       return
     }

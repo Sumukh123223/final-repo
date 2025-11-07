@@ -134,6 +134,19 @@
             ⚠️ Not Connected
         </div>
         
+        <!-- File Protocol Warning -->
+        <div id="fileProtocolWarning" class="wallet-info" style="display: none; background: #fee2e2; border-left: 4px solid #dc2626; margin-bottom: 20px;">
+            <strong style="color: #dc2626;">⚠️ IMPORTANT: File Protocol Detected!</strong>
+            <p style="margin: 10px 0; color: #991b1b; font-size: 0.9rem;">
+                MetaMask cannot work with <code>file://</code> URLs for security reasons.<br><br>
+                <strong>✅ SOLUTION:</strong><br>
+                1. Open Terminal in this folder<br>
+                2. Run: <code>./start-server.sh</code> (or <code>python3 -m http.server 8000</code>)<br>
+                3. Open browser to: <code>http://localhost:8000/walletconnect-test.html</code><br>
+                4. Then try connecting again
+            </p>
+        </div>
+        
         <!-- Mobile Instructions -->
         <div id="mobileInstructions" class="wallet-info" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; margin-bottom: 20px;">
             <strong style="color: #0284c7;">📱 Mobile Users:</strong>
@@ -230,6 +243,22 @@
             const isMobile = isMobileDevice()
             
             if (!hasEthereum) {
+              // Check if page is opened as file://
+              const isFileProtocol = window.location.protocol === 'file:'
+              
+              if (isFileProtocol) {
+                alert('⚠️ IMPORTANT: File Protocol Detected!\n\n' +
+                  'MetaMask cannot work with file:// URLs for security reasons.\n\n' +
+                  '✅ SOLUTION:\n' +
+                  '1. Open Terminal in this folder\n' +
+                  '2. Run: ./start-server.sh\n' +
+                  '   (or: python3 -m http.server 8000)\n' +
+                  '3. Open browser to: http://localhost:8000/walletconnect-test.html\n' +
+                  '4. Then try connecting again\n\n' +
+                  'This will serve the site via HTTP, allowing MetaMask to work.')
+                return
+              }
+              
               if (isMobile) {
                 const message = 'MetaMask not detected!\n\n' +
                   '📱 For Mobile:\n' +
@@ -241,7 +270,7 @@
                   'Install MetaMask browser extension'
                 alert(message)
               } else {
-                alert('MetaMask not found. Please:\n\n1. Install MetaMask extension\n2. Refresh this page\n3. Make sure MetaMask is unlocked\n\nGet it at: https://metamask.io/download/')
+                alert('MetaMask not found. Please:\n\n1. Install MetaMask extension\n2. Refresh this page\n3. Make sure MetaMask is unlocked\n4. Make sure you\'re using http:// not file://\n\nGet it at: https://metamask.io/download/')
               }
               return
             }
@@ -347,9 +376,18 @@
             const disconnectBtn = document.getElementById('disconnectBtn')
             const appkitButton = document.getElementById('appkitButton')
             const mobileInstructions = document.getElementById('mobileInstructions')
+            const fileProtocolWarning = document.getElementById('fileProtocolWarning')
+            
+            // Check for file:// protocol
+            const isFileProtocol = window.location.protocol === 'file:'
+            if (isFileProtocol && fileProtocolWarning) {
+                fileProtocolWarning.style.display = 'block'
+            } else if (fileProtocolWarning) {
+                fileProtocolWarning.style.display = 'none'
+            }
             
             // Show mobile instructions if on mobile and not connected
-            if (isMobileDevice() && !window.account) {
+            if (isMobileDevice() && !window.account && !isFileProtocol) {
                 if (mobileInstructions) mobileInstructions.style.display = 'block'
             } else {
                 if (mobileInstructions) mobileInstructions.style.display = 'none'
