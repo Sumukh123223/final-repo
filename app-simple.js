@@ -58,11 +58,24 @@ function initApp() {
     // Setup buttons
     setupButtons()
     
-    // Check if already connected
-    checkExistingConnection()
-    
     // Setup referral system
     setupReferralSystem()
+    
+    // Check if already connected immediately
+    checkExistingConnection()
+    
+    // Also check periodically in case wallet connects after page load
+    let connectionCheckInterval = setInterval(() => {
+        if (window.account && window.signer && !contract) {
+            console.log('🔄 Periodic check: Wallet connected but contract not set up, initializing...')
+            checkExistingConnection()
+        }
+    }, 2000) // Check every 2 seconds
+    
+    // Stop checking after 30 seconds
+    setTimeout(() => {
+        clearInterval(connectionCheckInterval)
+    }, 30000)
     
     // Listen for wallet connection events
     window.addEventListener('walletConnected', (e) => {
@@ -77,15 +90,6 @@ function initApp() {
             updateDashboard()
         }, 500)
     })
-    
-    // Also listen for existing connection
-    if (window.account && window.signer) {
-        console.log('✅ Existing wallet connection detected, setting up...')
-        setupContracts()
-        setTimeout(() => {
-            updateDashboard()
-        }, 1000)
-    }
 }
 
 // Setup button handlers
@@ -110,14 +114,48 @@ function setupButtons() {
 
 // Check if wallet is already connected
 async function checkExistingConnection() {
+    // Check if wallet is connected via MetaMask
+    if (typeof window.ethereum !== 'undefined' && window.ethereum.selectedAddress) {
+        const selectedAddress = window.ethereum.selectedAddress
+        console.log('✅ MetaMask wallet already connected:', selectedAddress)
+        
+        // Set account if not already set
+        if (!window.account) {
+            window.account = selectedAddress
+        }
+        
+        // Setup provider and signer if not already set
+        if (!window.provider || !window.signer) {
+            if (typeof ethers !== 'undefined') {
+                window.provider = new ethers.providers.Web3Provider(window.ethereum)
+                window.signer = window.provider.getSigner()
+                console.log('✅ Provider and signer set up from MetaMask')
+            }
+        }
+    }
+    
     // Check if WalletConnect or other provider is already connected
     if (window.account && window.provider && window.signer) {
-        console.log('✅ Existing connection found, setting up contracts...')
+        console.log('✅ Existing connection found:', window.account)
+        console.log('📋 Setting up contracts...')
         setupContracts()
-        // Wait a bit for contracts to initialize
+        
+        // Wait a bit for contracts to initialize, then update dashboard
         setTimeout(() => {
+            console.log('🔄 Updating dashboard for existing connection...')
             updateDashboard()
         }, 1000)
+        
+        // Also update again after 3 seconds to ensure it's loaded
+        setTimeout(() => {
+            console.log('🔄 Second dashboard update for existing connection...')
+            updateDashboard()
+        }, 3000)
+    } else {
+        console.log('⚠️ No existing wallet connection found')
+        console.log('Account:', window.account)
+        console.log('Provider:', !!window.provider)
+        console.log('Signer:', !!window.signer)
     }
 }
 
