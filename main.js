@@ -2,17 +2,32 @@
 // Following official guide: https://docs.reown.com/appkit/javascript/core/installation
 // Using ES modules from CDN (esm.sh) for vanilla JavaScript without npm/build tools
 
-console.log('📦 main.js module loading started...')
+// Wrap everything in try-catch to handle module loading errors
+try {
+  console.log('📦 main.js module loading started...')
 
-// Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
-console.log('📦 Importing createAppKit...')
-import { createAppKit } from 'https://esm.sh/@reown/appkit@1.8.12'
+  // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
+  console.log('📦 Importing createAppKit...')
+  const { createAppKit } = await import('https://esm.sh/@reown/appkit@1.8.12')
+  console.log('✅ createAppKit imported')
 
-console.log('📦 Importing WagmiAdapter...')
-// Try using @latest for WagmiAdapter to avoid @wagmi/core version conflicts
-import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
+  console.log('📦 Importing WagmiAdapter...')
+  // Try using @latest for WagmiAdapter to avoid @wagmi/core version conflicts
+  const { WagmiAdapter } = await import('https://esm.sh/@reown/appkit-adapter-wagmi@latest')
+  console.log('✅ WagmiAdapter imported')
 
-console.log('✅ All imports loaded successfully')
+  console.log('✅ All imports loaded successfully')
+  
+  // Continue with initialization...
+  initializeAppKit(createAppKit, WagmiAdapter)
+} catch (error) {
+  console.error('❌ CRITICAL: Failed to load main.js module:', error)
+  console.error('Error details:', error.message, error.stack)
+  window.modal = null
+  window.walletModalReady = false
+}
+
+async function initializeAppKit(createAppKit, WagmiAdapter) {
 // Import watchAccount dynamically to avoid 404 errors
 let watchAccount = null
 
