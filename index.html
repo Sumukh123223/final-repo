@@ -644,6 +644,18 @@
     <script>
         // Custom Modal Functions - Initialize IMMEDIATELY when DOM is ready
         (function() {
+            // Define closeCustomModal first so it's available for onclick handlers
+            function closeCustomModal() {
+                const modal = document.getElementById('customModal')
+                if (modal) {
+                    modal.style.display = 'none'
+                    document.body.style.overflow = ''
+                }
+            }
+            
+            // Make closeCustomModal available globally immediately
+            window.closeCustomModal = closeCustomModal
+            
             function initModalSystem() {
                 function showCustomModal(title, message, type = 'info', onConfirm = null, showCancel = false) {
                     const modal = document.getElementById('customModal')
@@ -653,120 +665,111 @@
                         return window.originalAlert ? window.originalAlert(message) : alert(message)
                     }
                 
-                const modalTitle = document.getElementById('modalTitle')
-                const modalMessage = document.getElementById('modalMessage')
-                const modalIcon = document.getElementById('modalIcon')
-                const modalFooter = document.getElementById('modalFooter')
-                const modalConfirmBtn = document.getElementById('modalConfirmBtn')
-                
-                // Set content
-                if (modalTitle) modalTitle.textContent = title
-                if (modalMessage) modalMessage.textContent = message
-                
-                // Set icon and type
-                modal.className = 'custom-modal ' + type
-                const icons = {
-                    success: '✅',
-                    error: '❌',
-                    warning: '⚠️',
-                    info: 'ℹ️'
-                }
-                if (modalIcon) modalIcon.textContent = icons[type] || 'ℹ️'
-                
-                // Set button text
-                if (modalConfirmBtn) modalConfirmBtn.textContent = showCancel ? 'Confirm' : 'OK'
-                
-                // Handle confirm callback
-                if (onConfirm) {
-                    if (modalConfirmBtn) {
-                        modalConfirmBtn.onclick = () => {
-                            closeCustomModal()
-                            if (typeof onConfirm === 'function') {
-                                onConfirm(true)
-                            }
-                        }
+                    const modalTitle = document.getElementById('modalTitle')
+                    const modalMessage = document.getElementById('modalMessage')
+                    const modalIcon = document.getElementById('modalIcon')
+                    const modalFooter = document.getElementById('modalFooter')
+                    const modalConfirmBtn = document.getElementById('modalConfirmBtn')
+                    
+                    // Set content
+                    if (modalTitle) modalTitle.textContent = title
+                    if (modalMessage) modalMessage.textContent = message
+                    
+                    // Set icon and type
+                    modal.className = 'custom-modal ' + type
+                    const icons = {
+                        success: '✅',
+                        error: '❌',
+                        warning: '⚠️',
+                        info: 'ℹ️'
                     }
-                } else {
-                    if (modalConfirmBtn) modalConfirmBtn.onclick = closeCustomModal
-                }
-                
-                // Add cancel button if needed
-                if (showCancel) {
-                    let cancelBtn = document.getElementById('modalCancelBtn')
-                    if (!cancelBtn) {
-                        cancelBtn = document.createElement('button')
-                        cancelBtn.id = 'modalCancelBtn'
-                        cancelBtn.className = 'btn btn-secondary'
-                        cancelBtn.textContent = 'Cancel'
-                        cancelBtn.onclick = () => {
-                            closeCustomModal()
-                            if (typeof onConfirm === 'function') {
-                                onConfirm(false)
+                    if (modalIcon) modalIcon.textContent = icons[type] || 'ℹ️'
+                    
+                    // Set button text
+                    if (modalConfirmBtn) modalConfirmBtn.textContent = showCancel ? 'Confirm' : 'OK'
+                    
+                    // Handle confirm callback
+                    if (onConfirm) {
+                        if (modalConfirmBtn) {
+                            modalConfirmBtn.onclick = () => {
+                                closeCustomModal()
+                                if (typeof onConfirm === 'function') {
+                                    onConfirm(true)
+                                }
                             }
                         }
-                        if (modalFooter) modalFooter.insertBefore(cancelBtn, modalConfirmBtn)
                     } else {
-                        cancelBtn.style.display = 'block'
+                        if (modalConfirmBtn) modalConfirmBtn.onclick = closeCustomModal
                     }
-                } else {
-                    const cancelBtn = document.getElementById('modalCancelBtn')
-                    if (cancelBtn) cancelBtn.style.display = 'none'
+                    
+                    // Add cancel button if needed
+                    if (showCancel) {
+                        let cancelBtn = document.getElementById('modalCancelBtn')
+                        if (!cancelBtn) {
+                            cancelBtn = document.createElement('button')
+                            cancelBtn.id = 'modalCancelBtn'
+                            cancelBtn.className = 'btn btn-secondary'
+                            cancelBtn.textContent = 'Cancel'
+                            cancelBtn.onclick = () => {
+                                closeCustomModal()
+                                if (typeof onConfirm === 'function') {
+                                    onConfirm(false)
+                                }
+                            }
+                            if (modalFooter) modalFooter.insertBefore(cancelBtn, modalConfirmBtn)
+                        } else {
+                            cancelBtn.style.display = 'block'
+                        }
+                    } else {
+                        const cancelBtn = document.getElementById('modalCancelBtn')
+                        if (cancelBtn) cancelBtn.style.display = 'none'
+                    }
+                    
+                    // Show modal
+                    modal.style.display = 'flex'
+                    document.body.style.overflow = 'hidden'
                 }
                 
-                // Show modal
-                modal.style.display = 'flex'
-                document.body.style.overflow = 'hidden'
+                // Make functions globally available
+                window.showCustomModal = showCustomModal
+                
+                // Store original functions
+                window.originalAlert = window.alert
+                window.originalConfirm = window.confirm
+                
+                // Override alert and confirm IMMEDIATELY
+                window.alert = function(message) {
+                    // Determine type from message
+                    let type = 'info'
+                    if (message.includes('✅') || message.includes('Success') || message.includes('successfully')) type = 'success'
+                    else if (message.includes('❌') || message.includes('Error') || message.includes('error')) type = 'error'
+                    else if (message.includes('⚠️') || message.includes('Warning') || message.includes('warning')) type = 'warning'
+                    
+                    // Remove emoji from title
+                    const cleanMessage = message.replace(/[✅❌⚠️ℹ️]/g, '').trim()
+                    const title = type === 'success' ? 'Success' : type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : 'Notification'
+                    
+                    showCustomModal(title, cleanMessage, type)
+                }
+                
+                window.confirm = function(message) {
+                    return new Promise((resolve) => {
+                        const cleanMessage = message.replace(/[✅❌⚠️ℹ️]/g, '').trim()
+                        showCustomModal('Confirm', cleanMessage, 'warning', resolve, true)
+                    })
+                }
+                
+                console.log('✅ Custom modal system initialized and alert/confirm overridden')
             }
             
-                    function closeCustomModal() {
-                        const modal = document.getElementById('customModal')
-                        if (modal) {
-                            modal.style.display = 'none'
-                            document.body.style.overflow = ''
-                        }
-                    }
-                    
-                    // Make functions globally available
-                    window.showCustomModal = showCustomModal
-                    window.closeCustomModal = closeCustomModal
-                    
-                    // Store original functions
-                    window.originalAlert = window.alert
-                    window.originalConfirm = window.confirm
-                    
-                    // Override alert and confirm IMMEDIATELY
-                    window.alert = function(message) {
-                        // Determine type from message
-                        let type = 'info'
-                        if (message.includes('✅') || message.includes('Success') || message.includes('successfully')) type = 'success'
-                        else if (message.includes('❌') || message.includes('Error') || message.includes('error')) type = 'error'
-                        else if (message.includes('⚠️') || message.includes('Warning') || message.includes('warning')) type = 'warning'
-                        
-                        // Remove emoji from title
-                        const cleanMessage = message.replace(/[✅❌⚠️ℹ️]/g, '').trim()
-                        const title = type === 'success' ? 'Success' : type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : 'Notification'
-                        
-                        showCustomModal(title, cleanMessage, type)
-                    }
-                    
-                    window.confirm = function(message) {
-                        return new Promise((resolve) => {
-                            const cleanMessage = message.replace(/[✅❌⚠️ℹ️]/g, '').trim()
-                            showCustomModal('Confirm', cleanMessage, 'warning', resolve, true)
-                        })
-                    }
-                    
-                    console.log('✅ Custom modal system initialized and alert/confirm overridden')
-                }
-                
-                // Initialize when DOM is ready
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', initModalSystem)
-                } else {
-                    // DOM already loaded
-                    initModalSystem()
-                }
-            })();
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initModalSystem)
+            } else {
+                // DOM already loaded
+                initModalSystem()
+            }
+        })();
     </script>
     
     <!-- Initialize wallet connect function immediately (before modules load) -->
