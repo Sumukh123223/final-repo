@@ -359,7 +359,7 @@
                             </p>
                             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                                 <code id="contractAddress" style="font-family: 'Courier New', monospace; font-size: 0.85rem; color: #1f2937; background: #f3f4f6; padding: 0.5rem; border-radius: 6px; word-break: break-all; flex: 1; min-width: 200px;">
-                                    0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4
+                                    0x45CbCA5f88c510526049F31cECeF626Eb5254784
                                 </code>
                                 <button onclick="copyContractAddress()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
                                     Copy
@@ -449,7 +449,7 @@
                             <button class="btn btn-primary" onclick="document.getElementById('buy-tokens').scrollIntoView({ behavior: 'smooth' })">
                                 ₿ Buy More Tokens
                             </button>
-                            <button class="btn btn-secondary" onclick="window.open('https://pancakeswap.finance/swap?inputCurrency=0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4', '_blank')">
+                            <button class="btn btn-secondary" onclick="window.open('https://pancakeswap.finance/swap?inputCurrency=0x45CbCA5f88c510526049F31cECeF626Eb5254784', '_blank')">
                                 💸 Exit Mining
                             </button>
                         </div>
@@ -595,7 +595,7 @@
                     <ul>
                         <li><a href="#company">About Us</a></li>
                         <li><a href="#contact">Contact Us</a></li>
-                        <li><a href="https://bscscan.com/token/0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4" target="_blank">BSCScan</a></li>
+                        <li><a href="https://bscscan.com/token/0x45CbCA5f88c510526049F31cECeF626Eb5254784" target="_blank">BSCScan</a></li>
                         <li><a href="https://pancakeswap.finance" target="_blank">PancakeSwap</a></li>
                     </ul>
                 </div>
@@ -605,7 +605,7 @@
                         <li><a href="#contact">Contact Us</a></li>
                         <li><a href="#company">Privacy Policy</a></li>
                         <li><a href="#company">Terms of Service</a></li>
-                        <li><a href="https://bscscan.com/address/0x06c834a00d99eaa6ab2afd1ba753546a7f3f1ed4" target="_blank">Smart Contract</a></li>
+                        <li><a href="https://bscscan.com/address/0x45CbCA5f88c510526049F31cECeF626Eb5254784" target="_blank">Smart Contract</a></li>
                     </ul>
                 </div>
             </div>
@@ -727,6 +727,71 @@
             const warning = document.getElementById('fileProtocolWarning')
             if (warning) warning.style.display = 'block'
             console.warn('⚠️ File protocol detected - MetaMask will not work!')
+        }
+        
+        // Contract address functions
+        function copyContractAddress() {
+            const address = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
+            navigator.clipboard.writeText(address).then(() => {
+                alert('✅ Contract address copied to clipboard!')
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea')
+                textarea.value = address
+                document.body.appendChild(textarea)
+                textarea.select()
+                document.execCommand('copy')
+                document.body.removeChild(textarea)
+                alert('✅ Contract address copied to clipboard!')
+            })
+        }
+        
+        function addToMetaMask() {
+            const address = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
+            const tokenSymbol = 'CLEANSPARK'
+            const tokenDecimals = 18
+            const tokenImage = 'https://files.reown.com/reown-social-card.png'
+            
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.request({
+                    method: 'wallet_watchAsset',
+                    params: {
+                        type: 'ERC20',
+                        options: {
+                            address: address,
+                            symbol: tokenSymbol,
+                            decimals: tokenDecimals,
+                            image: tokenImage,
+                        },
+                    },
+                }).then((success) => {
+                    if (success) {
+                        alert('✅ CleanSpark token added to MetaMask!')
+                    } else {
+                        alert('⚠️ Token was not added. Please try again.')
+                    }
+                }).catch((error) => {
+                    console.error('Error adding token:', error)
+                    alert('❌ Error adding token: ' + error.message)
+                })
+            } else {
+                alert('⚠️ MetaMask is not installed. Please install MetaMask first.')
+            }
+        }
+        
+        function addToTrustWallet() {
+            const address = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
+            const tokenSymbol = 'CLEANSPARK'
+            const tokenDecimals = 18
+            
+            // Trust Wallet deep link format
+            const trustWalletLink = `https://link.trustwallet.com/add_token?asset=c56&address=${address}&name=CleanSpark&symbol=${tokenSymbol}&decimals=${tokenDecimals}`
+            
+            // Try to open Trust Wallet app
+            window.open(trustWalletLink, '_blank')
+            
+            // Also show instructions
+            alert('📱 Adding to Trust Wallet:\n\n1. Click OK to open Trust Wallet\n2. Or manually add token:\n   - Open Trust Wallet\n   - Go to Settings → Wallets\n   - Add Custom Token\n   - Enter contract address:\n   ' + address)
         }
         
         console.log('✅ Wallet connect placeholder functions initialized')
