@@ -18,14 +18,15 @@ try {
   console.log('📦 Starting AppKit initialization...')
   
   // Use official Reown AppKit - following official documentation
-  // Try latest stable version with proper CDN imports
-  console.log('📦 Importing createAppKit from esm.sh (official pattern)...')
-  const appkitModule = await import('https://esm.sh/@reown/appkit')
+  // Use version 1.5.0 which is stable and doesn't have W3mFrameProviderSingleton issues
+  console.log('📦 Importing createAppKit from esm.sh (version 1.5.0)...')
+  const appkitModule = await import('https://esm.sh/@reown/appkit@1.5.0')
   const { createAppKit } = appkitModule
   console.log('✅ createAppKit imported:', typeof createAppKit)
   
-  console.log('📦 Importing WagmiAdapter from esm.sh...')
-  const adapterModule = await import('https://esm.sh/@reown/appkit-adapter-wagmi')
+  console.log('📦 Importing WagmiAdapter from esm.sh (version 1.0.0)...')
+  // Use version 1.0.0 which is compatible with AppKit 1.5.0
+  const adapterModule = await import('https://esm.sh/@reown/appkit-adapter-wagmi@1.0.0')
   const { WagmiAdapter } = adapterModule
   console.log('✅ WagmiAdapter imported:', typeof WagmiAdapter)
   
@@ -93,17 +94,26 @@ try {
     console.log('🚀 Project ID:', projectId)
     
     // Create AppKit modal following official documentation pattern
-    // Disable email/socials features to avoid module errors
-    modal = createAppKit({
-      adapters: [wagmiAdapter],
-      networks: [bsc],
-      metadata,
-      projectId,
-      features: {
-        analytics: true // Optional - defaults to your Cloud configuration
-        // email and socials disabled by default to avoid module errors
+    // Use minimal features to avoid module errors
+    try {
+      modal = createAppKit({
+        adapters: [wagmiAdapter],
+        networks: [bsc],
+        metadata,
+        projectId,
+        features: {
+          analytics: false // Disable analytics to avoid module loading issues
+        }
+      })
+      console.log('✅ createAppKit call completed')
+    } catch (createError) {
+      // If createAppKit throws, check if modal was still created
+      console.warn('⚠️ createAppKit threw error, but checking if modal was created:', createError.message)
+      // The error might be non-fatal - check if modal exists anyway
+      if (!modal) {
+        throw createError // Re-throw if modal wasn't created
       }
-    })
+    }
     
     console.log('✅ AppKit modal created:', modal)
     console.log('✅ Modal type:', typeof modal)
