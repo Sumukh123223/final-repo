@@ -317,9 +317,9 @@ async function updateDashboard() {
         // Try to get user holdings first (more complete data)
         let balance = ethers.BigNumber.from(0)
         let rewards = ethers.BigNumber.from(0)
-        let lockedAmount = ethers.BigNumber.from(0)
-        let lockStatus = 'All unlocked'
         let totalBalance = ethers.BigNumber.from(0)
+        let lastBuyTime = null
+        let nextRewardTime = null
         
         try {
             console.log('📞 Calling contract.getUserHoldings with account:', account)
@@ -328,14 +328,14 @@ async function updateDashboard() {
             console.log('📊 Holdings result:', holdings)
             
             if (holdings && holdings.length >= 6) {
-                lockedAmount = holdings[0] // lockedAmount
+                const lockedAmount = holdings[0] // lockedAmount
                 rewards = holdings[1] // earnedRewards
                 totalBalance = holdings[2] // totalBalance
                 const pendingRewards = holdings[3] // pendingRewards
                 const lockEnd = holdings[4] // lockEnd
                 const isLocked = holdings[5] // isLocked
                 
-                // Use totalBalance as the main balance (includes locked + unlocked)
+                // Use totalBalance as the main balance
                 balance = totalBalance
                 
                 // Use pendingRewards if available, otherwise use earnedRewards
@@ -343,16 +343,15 @@ async function updateDashboard() {
                     rewards = pendingRewards
                 }
                 
-                if (isLocked) {
-                    const lockEndDate = new Date(lockEnd.toNumber() * 1000)
-                    lockStatus = `Locked until ${lockEndDate.toLocaleString()}`
+                // Use lockEnd as last buy time if available (even if not locked)
+                if (lockEnd && lockEnd.gt(0)) {
+                    lastBuyTime = new Date(lockEnd.toNumber() * 1000)
                 }
                 
                 console.log('📊 Parsed holdings:', {
-                    lockedAmount: lockedAmount.toString(),
                     rewards: rewards.toString(),
                     totalBalance: totalBalance.toString(),
-                    isLocked: isLocked
+                    lastBuyTime: lastBuyTime
                 })
             }
         } catch (e) {
@@ -368,16 +367,56 @@ async function updateDashboard() {
             console.log('✅ calculateRewards call successful')
         }
         
+        // Calculate next reward time (15 minutes after last buy or current time)
+        if (lastBuyTime) {
+            // Next reward is 15 minutes after last buy
+            nextRewardTime = new Date(lastBuyTime.getTime() + 15 * 60 * 1000)
+        } else if (balance.gt(0)) {
+            // If we have balance but no last buy time, use current time + 15 min as estimate
+            nextRewardTime = new Date(Date.now() + 15 * 60 * 1000)
+        }
+        
         console.log('📊 Final values:', {
             balance: balance.toString(),
             rewards: rewards.toString(),
-            locked: lockedAmount.toString()
+            lastBuyTime: lastBuyTime,
+            nextRewardTime: nextRewardTime
         })
         
         // Format values
         const balanceFormatted = parseFloat(ethers.utils.formatEther(balance)).toFixed(4)
         const rewardsFormatted = parseFloat(ethers.utils.formatEther(rewards)).toFixed(4)
-        const lockedFormatted = parseFloat(ethers.utils.formatEther(lockedAmount)).toFixed(4)
+        
+        // Format times
+        let lastBuyTimeFormatted = 'Never'
+        if (lastBuyTime) {
+            const now = new Date()
+            const diff = now - lastBuyTime
+            if (diff < 60000) {
+                lastBuyTimeFormatted = 'Just now'
+            } else if (diff < 3600000) {
+                lastBuyTimeFormatted = `${Math.floor(diff / 60000)} min ago`
+            } else if (diff < 86400000) {
+                lastBuyTimeFormatted = `${Math.floor(diff / 3600000)} hours ago`
+            } else {
+                lastBuyTimeFormatted = lastBuyTime.toLocaleString()
+            }
+        }
+        
+        let nextRewardTimeFormatted = '--'
+        if (nextRewardTime) {
+            const now = new Date()
+            const diff = nextRewardTime - now
+            if (diff <= 0) {
+                nextRewardTimeFormatted = 'Now!'
+            } else if (diff < 60000) {
+                nextRewardTimeFormatted = `${Math.floor(diff / 1000)} sec`
+            } else if (diff < 3600000) {
+                nextRewardTimeFormatted = `${Math.floor(diff / 60000)} min`
+            } else {
+                nextRewardTimeFormatted = nextRewardTime.toLocaleTimeString()
+            }
+        }
         
         console.log('📊 Dashboard data:', {
             balance: balanceFormatted,
@@ -388,8 +427,8 @@ async function updateDashboard() {
         // Update elements - check for both possible IDs
         const balanceEl = document.getElementById('userBalance') || document.getElementById('tokenBalance')
         const rewardsEl = document.getElementById('pendingRewards')
-        const lockedEl = document.getElementById('lockedAmount')
-        const lockStatusEl = document.getElementById('lockStatus')
+        const lastBuyTimeEl = document.getElementById('lastBuyTime')
+        const nextRewardTimeEl = document.getElementById('nextRewardTime')
         
         if (balanceEl) {
             balanceEl.textContent = balanceFormatted + ' cleanSpark'
@@ -405,13 +444,18 @@ async function updateDashboard() {
             console.warn('⚠️ pendingRewards element not found')
         }
         
-        if (lockedEl) {
-            lockedEl.textContent = lockedFormatted + ' cleanSpark'
-            console.log('✅ Updated lockedAmount:', lockedFormatted)
+        if (lastBuyTimeEl) {
+            lastBuyTimeEl.textContent = lastBuyTimeFormatted
+            console.log('✅ Updated lastBuyTime:', lastBuyTimeFormatted)
+        } else {
+            console.warn('⚠️ lastBuyTime element not found')
         }
         
-        if (lockStatusEl) {
-            lockStatusEl.textContent = lockStatus
+        if (nextRewardTimeEl) {
+            nextRewardTimeEl.textContent = nextRewardTimeFormatted
+            console.log('✅ Updated nextRewardTime:', nextRewardTimeFormatted)
+        } else {
+            console.warn('⚠️ nextRewardTime element not found')
         }
         
         // Update UI visibility
