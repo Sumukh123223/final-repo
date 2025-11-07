@@ -6,12 +6,44 @@ window.modal = null
 window.wagmiConfig = null
 window.walletModalReady = false
 
+// Helper function to detect mobile device
+function isMobileDevice() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+}
+
+// Helper function to detect if MetaMask mobile app is installed
+function checkMetaMaskMobile() {
+  if (isMobileDevice()) {
+    // Try to detect MetaMask mobile
+    const userAgent = navigator.userAgent.toLowerCase()
+    if (userAgent.includes('metamask') || window.ethereum?.isMetaMask) {
+      return true
+    }
+    return false
+  }
+  return false
+}
+
 // Set up global functions for onclick handlers
 async function connectMetaMask() {
   try {
     const hasEthereum = typeof window !== 'undefined' && typeof window.ethereum !== 'undefined'
+    const isMobile = isMobileDevice()
+    
     if (!hasEthereum) {
-      alert('MetaMask not found. Please install MetaMask to continue.')
+      if (isMobile) {
+        const message = 'MetaMask not detected!\n\n' +
+          '📱 For Mobile:\n' +
+          '1. Install MetaMask app from App Store/Play Store\n' +
+          '2. Open this site in MetaMask\'s in-app browser\n' +
+          '   (Menu → Browser → Enter URL)\n' +
+          '3. Or use MetaMask\'s "Connect" feature\n\n' +
+          '💻 For Desktop:\n' +
+          'Install MetaMask browser extension'
+        alert(message)
+      } else {
+        alert('MetaMask not found. Please install MetaMask browser extension to continue.\n\nGet it at: https://metamask.io/download/')
+      }
       return
     }
 

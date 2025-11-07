@@ -134,6 +134,17 @@
             ⚠️ Not Connected
         </div>
         
+        <!-- Mobile Instructions -->
+        <div id="mobileInstructions" class="wallet-info" style="display: none; background: #e0f2fe; border-left: 4px solid #0284c7; margin-bottom: 20px;">
+            <strong style="color: #0284c7;">📱 Mobile Users:</strong>
+            <p style="margin: 10px 0; color: #0c4a6e; font-size: 0.9rem;">
+                To connect MetaMask on mobile:<br>
+                1. Open this site in <strong>MetaMask app's browser</strong><br>
+                2. Go to MetaMask → Menu → Browser → Enter this URL<br>
+                3. Or use MetaMask's built-in "Connect" feature
+            </p>
+        </div>
+        
         <div id="walletInfo" class="wallet-info" style="display: none;">
             <strong>Connected Wallet:</strong>
             <div id="walletAddress" class="wallet-address"></div>
@@ -202,12 +213,31 @@
         window.wagmiConfig = null
         window.walletModalReady = false
 
+        // Helper function to detect mobile device
+        function isMobileDevice() {
+          return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        }
+
         // MetaMask connection function
         async function connectMetaMask() {
           try {
             const hasEthereum = typeof window !== 'undefined' && typeof window.ethereum !== 'undefined'
+            const isMobile = isMobileDevice()
+            
             if (!hasEthereum) {
-              alert('MetaMask not found. Please install MetaMask to continue.')
+              if (isMobile) {
+                const message = 'MetaMask not detected!\n\n' +
+                  '📱 For Mobile:\n' +
+                  '1. Install MetaMask app from App Store/Play Store\n' +
+                  '2. Open this site in MetaMask\'s in-app browser\n' +
+                  '   (Menu → Browser → Enter URL)\n' +
+                  '3. Or use MetaMask\'s "Connect" feature\n\n' +
+                  '💻 For Desktop:\n' +
+                  'Install MetaMask browser extension'
+                alert(message)
+              } else {
+                alert('MetaMask not found. Please install MetaMask browser extension to continue.\n\nGet it at: https://metamask.io/download/')
+              }
               return
             }
 
@@ -289,6 +319,14 @@
             const connectBtn = document.getElementById('connectBtn')
             const disconnectBtn = document.getElementById('disconnectBtn')
             const appkitButton = document.getElementById('appkitButton')
+            const mobileInstructions = document.getElementById('mobileInstructions')
+            
+            // Show mobile instructions if on mobile and not connected
+            if (isMobileDevice() && !window.account) {
+                if (mobileInstructions) mobileInstructions.style.display = 'block'
+            } else {
+                if (mobileInstructions) mobileInstructions.style.display = 'none'
+            }
             
             if (window.account) {
                 // Connected
