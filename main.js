@@ -141,34 +141,34 @@ import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
       onChange(account) {
         if (account && account.isConnected && account.address) {
           window.account = account.address
-        
-        // Get provider and signer from wagmi
-        const publicClient = wagmiConfig.getPublicClient()
-        wagmiConfig.getWalletClient().then((walletClient) => {
-          // Create ethers provider/signer from wagmi if ethers is available
-          if (typeof ethers !== 'undefined') {
-            // Convert wagmi client to ethers provider
-            window.provider = new ethers.providers.Web3Provider(walletClient.transport)
-            window.signer = window.provider.getSigner()
-          } else {
-            window.provider = publicClient
-            window.signer = walletClient
-          }
           
-          // Dispatch event for app-simple.js
-          window.dispatchEvent(new CustomEvent('walletConnected', {
-            detail: { 
-              account: window.account, 
-              provider: window.provider, 
-              signer: window.signer 
+          // Get provider and signer from wagmi
+          const publicClient = wagmiConfig.getPublicClient()
+          wagmiConfig.getWalletClient().then((walletClient) => {
+            // Create ethers provider/signer from wagmi if ethers is available
+            if (typeof ethers !== 'undefined') {
+              // Convert wagmi client to ethers provider
+              window.provider = new ethers.providers.Web3Provider(walletClient.transport)
+              window.signer = window.provider.getSigner()
+            } else {
+              window.provider = publicClient
+              window.signer = walletClient
             }
-          }))
-          
-          // Update UI
-          updateWalletUI()
-        }).catch((error) => {
-          console.error('Error getting wallet client:', error)
-        })
+            
+            // Dispatch event for app-simple.js
+            window.dispatchEvent(new CustomEvent('walletConnected', {
+              detail: { 
+                account: window.account, 
+                provider: window.provider, 
+                signer: window.signer 
+              }
+            }))
+            
+            // Update UI
+            updateWalletUI()
+          }).catch((error) => {
+            console.error('Error getting wallet client:', error)
+          })
         } else {
           window.account = null
           window.provider = null
