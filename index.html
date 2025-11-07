@@ -953,9 +953,18 @@
     
     <!-- Load AppKit Setup (Official Reown AppKit UI with wallet list, search, email/Google) -->
     <!-- Simple static import - cache busting with timestamp to force reload -->
-    <script type="module" src="main.js?v=11-20250115-v163" 
-            onload="console.log('✅ main.js script tag loaded successfully')"
-            onerror="console.error('❌ CRITICAL: main.js failed to load:', event)"></script>
+    <script type="module" src="main.js?v=12-20250115-debug" 
+            onload="console.log('✅ main.js script tag loaded successfully - onload fired')"
+            onerror="console.error('❌ CRITICAL: main.js failed to load:', event.error || event)"></script>
+    <script>
+        // Additional check to see if main.js module executed
+        setTimeout(() => {
+            if (!window.modal && !window.walletModalReady) {
+                console.warn('⚠️ main.js may not have executed - no modal or walletModalReady set')
+                console.log('Checking if main.js loaded:', document.querySelector('script[src*="main.js"]'))
+            }
+        }, 3000)
+    </script>
     
     <!-- Load ethers.js for contract interactions -->
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" 

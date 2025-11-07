@@ -3,9 +3,15 @@
 // Using ES modules from CDN (esm.sh) for vanilla JavaScript without npm/build tools
 
 // CRITICAL: This log MUST appear if module loads
+// Put this FIRST before any imports or async code
 console.log('📦📦📦 main.js MODULE EXECUTING - This log proves the module is running!')
 console.log('📦 Current URL:', window.location.href)
 console.log('📦 Timestamp:', new Date().toISOString())
+console.log('📦 Module script src:', document.currentScript?.src || 'unknown')
+
+// Set a flag immediately so we know module loaded
+window.mainJsLoaded = true
+console.log('✅ window.mainJsLoaded set to true')
 
 // Use top-level await (ES modules support this natively)
 try {
