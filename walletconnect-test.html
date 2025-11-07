@@ -162,8 +162,9 @@
     <!-- WalletConnect Setup - Inline to avoid CORS issues -->
     <script type="module">
         // Reown AppKit - WalletConnect Implementation
-        import { createAppKit } from 'https://esm.sh/@reown/appkit@latest'
-        import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
+        // Use stable version to avoid W3mFrameProviderSingleton errors
+        import { createAppKit } from 'https://esm.sh/@reown/appkit@1.5.0'
+        import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@1.0.0'
 
         // Define BSC network manually
         const bsc = {
@@ -218,7 +219,7 @@
             metadata,
             projectId,
             features: {
-              analytics: true
+              analytics: false // Disable analytics to avoid module errors
             }
           })
           
@@ -251,8 +252,8 @@
 
         window.openWalletModal = window.openConnectModal
 
-        // Listen for account changes
-        import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
+        // Listen for account changes - use compatible version
+        import('https://esm.sh/@wagmi/core@2.4.0').then((wagmiCore) => {
           const { watchAccount } = wagmiCore
           
           if (wagmiConfig && watchAccount) {
