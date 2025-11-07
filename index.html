@@ -726,10 +726,42 @@
                     }
                     
                 // Show modal - use requestAnimationFrame to ensure DOM is ready
+                console.log('📋 About to display modal:', title)
+                console.log('📋 Modal element:', modal)
+                console.log('📋 Modal current display:', modal.style.display)
+                
                 requestAnimationFrame(() => {
-                    modal.style.display = 'flex'
-                    document.body.style.overflow = 'hidden'
-                    console.log('✅ Modal displayed:', title)
+                    try {
+                        modal.style.display = 'flex'
+                        document.body.style.overflow = 'hidden'
+                        console.log('✅ Modal displayed:', title)
+                        console.log('📋 Modal display after set:', modal.style.display)
+                        
+                        // Force a reflow to ensure the display change takes effect
+                        void modal.offsetHeight
+                        
+                        // Double-check the modal is visible
+                        setTimeout(() => {
+                            const computedStyle = window.getComputedStyle(modal)
+                            console.log('📋 Modal computed display:', computedStyle.display)
+                            console.log('📋 Modal computed visibility:', computedStyle.visibility)
+                            console.log('📋 Modal computed opacity:', computedStyle.opacity)
+                            if (computedStyle.display === 'none') {
+                                console.error('❌ Modal display is still none! Forcing display...')
+                                modal.style.display = 'flex'
+                                modal.style.visibility = 'visible'
+                                modal.style.opacity = '1'
+                            }
+                        }, 50)
+                    } catch (error) {
+                        console.error('❌ Error displaying modal:', error)
+                        // Fallback to native alert
+                        if (window.originalAlert) {
+                            window.originalAlert(message)
+                        } else {
+                            alert(message)
+                        }
+                    }
                 })
             }
                 
