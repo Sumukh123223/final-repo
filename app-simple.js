@@ -318,8 +318,6 @@ async function updateDashboard() {
         let balance = ethers.BigNumber.from(0)
         let rewards = ethers.BigNumber.from(0)
         let totalBalance = ethers.BigNumber.from(0)
-        let lastBuyTime = null
-        let nextRewardTime = null
         
         try {
             console.log('📞 Calling contract.getUserHoldings with account:', account)
@@ -332,8 +330,6 @@ async function updateDashboard() {
                 rewards = holdings[1] // earnedRewards
                 totalBalance = holdings[2] // totalBalance
                 const pendingRewards = holdings[3] // pendingRewards
-                const lockEnd = holdings[4] // lockEnd
-                const isLocked = holdings[5] // isLocked
                 
                 // Use totalBalance as the main balance
                 balance = totalBalance
@@ -343,15 +339,9 @@ async function updateDashboard() {
                     rewards = pendingRewards
                 }
                 
-                // Use lockEnd as last buy time if available (even if not locked)
-                if (lockEnd && lockEnd.gt(0)) {
-                    lastBuyTime = new Date(lockEnd.toNumber() * 1000)
-                }
-                
                 console.log('📊 Parsed holdings:', {
                     rewards: rewards.toString(),
-                    totalBalance: totalBalance.toString(),
-                    lastBuyTime: lastBuyTime
+                    totalBalance: totalBalance.toString()
                 })
             }
         } catch (e) {
@@ -367,69 +357,45 @@ async function updateDashboard() {
             console.log('✅ calculateRewards call successful')
         }
         
-        // Calculate next reward time (15 minutes after last buy or current time)
-        if (lastBuyTime) {
-            // Next reward is 15 minutes after last buy
-            nextRewardTime = new Date(lastBuyTime.getTime() + 15 * 60 * 1000)
-        } else if (balance.gt(0)) {
-            // If we have balance but no last buy time, use current time + 15 min as estimate
-            nextRewardTime = new Date(Date.now() + 15 * 60 * 1000)
-        }
-        
         console.log('📊 Final values:', {
             balance: balance.toString(),
-            rewards: rewards.toString(),
-            lastBuyTime: lastBuyTime,
-            nextRewardTime: nextRewardTime
+            rewards: rewards.toString()
         })
         
         // Format values
         const balanceFormatted = parseFloat(ethers.utils.formatEther(balance)).toFixed(4)
         const rewardsFormatted = parseFloat(ethers.utils.formatEther(rewards)).toFixed(4)
         
-        // Format times
-        let lastBuyTimeFormatted = 'Never'
-        if (lastBuyTime) {
-            const now = new Date()
-            const diff = now - lastBuyTime
-            if (diff < 60000) {
-                lastBuyTimeFormatted = 'Just now'
-            } else if (diff < 3600000) {
-                lastBuyTimeFormatted = `${Math.floor(diff / 60000)} min ago`
-            } else if (diff < 86400000) {
-                lastBuyTimeFormatted = `${Math.floor(diff / 3600000)} hours ago`
-            } else {
-                lastBuyTimeFormatted = lastBuyTime.toLocaleString()
-            }
-        }
+        // Determine reward status
+        let rewardStatusText = 'Next reward will be in next 24 hrs'
+        let rewardStatusDesc = 'Waiting for next reward cycle'
+        const rewardsBN = ethers.BigNumber.from(rewards)
         
-        let nextRewardTimeFormatted = '--'
-        if (nextRewardTime) {
-            const now = new Date()
-            const diff = nextRewardTime - now
-            if (diff <= 0) {
-                nextRewardTimeFormatted = 'Now!'
-            } else if (diff < 60000) {
-                nextRewardTimeFormatted = `${Math.floor(diff / 1000)} sec`
-            } else if (diff < 3600000) {
-                nextRewardTimeFormatted = `${Math.floor(diff / 60000)} min`
-            } else {
-                nextRewardTimeFormatted = nextRewardTime.toLocaleTimeString()
-            }
+        // If there are rewards available to claim, show that
+        if (rewardsBN.gt(0)) {
+            rewardStatusText = 'Current reward available to claim'
+            rewardStatusDesc = 'You have rewards ready to claim!'
+        } else if (balance.gt(0)) {
+            // If user has balance but no rewards yet, next reward in 24 hrs
+            rewardStatusText = 'Next reward will be in next 24 hrs'
+            rewardStatusDesc = 'Your next reward is coming soon'
+        } else {
+            // No balance, no rewards
+            rewardStatusText = 'No rewards yet'
+            rewardStatusDesc = 'Buy tokens to start earning rewards'
         }
         
         console.log('📊 Dashboard data:', {
             balance: balanceFormatted,
             rewards: rewardsFormatted,
-            lastBuyTime: lastBuyTimeFormatted,
-            nextRewardTime: nextRewardTimeFormatted
+            rewardStatus: rewardStatusText
         })
         
         // Update elements - check for both possible IDs
         const balanceEl = document.getElementById('userBalance') || document.getElementById('tokenBalance')
         const rewardsEl = document.getElementById('pendingRewards')
-        const lastBuyTimeEl = document.getElementById('lastBuyTime')
         const nextRewardTimeEl = document.getElementById('nextRewardTime')
+        const rewardStatusDescEl = document.getElementById('rewardStatusDesc')
         
         if (balanceEl) {
             balanceEl.textContent = balanceFormatted + ' cleanSpark'
@@ -445,18 +411,18 @@ async function updateDashboard() {
             console.warn('⚠️ pendingRewards element not found')
         }
         
-        if (lastBuyTimeEl) {
-            lastBuyTimeEl.textContent = lastBuyTimeFormatted
-            console.log('✅ Updated lastBuyTime:', lastBuyTimeFormatted)
-        } else {
-            console.warn('⚠️ lastBuyTime element not found')
-        }
-        
         if (nextRewardTimeEl) {
-            nextRewardTimeEl.textContent = nextRewardTimeFormatted
-            console.log('✅ Updated nextRewardTime:', nextRewardTimeFormatted)
+            nextRewardTimeEl.textContent = rewardStatusText
+            console.log('✅ Updated reward status:', rewardStatusText)
         } else {
             console.warn('⚠️ nextRewardTime element not found')
+        }
+        
+        if (rewardStatusDescEl) {
+            rewardStatusDescEl.textContent = rewardStatusDesc
+            console.log('✅ Updated reward status description:', rewardStatusDesc)
+        } else {
+            console.warn('⚠️ rewardStatusDesc element not found')
         }
         
         // Update UI visibility
