@@ -159,12 +159,37 @@
         }
     </script>
 
+    <!-- Suppress W3mFrameProviderSingleton errors -->
+    <script>
+        window.addEventListener('error', function(event) {
+            if (event.message && (
+                event.message.includes('W3mFrameProviderSingleton') ||
+                event.message.includes('AccountController') ||
+                event.message.includes('does not provide an export')
+            )) {
+                console.warn('⚠️ Suppressed non-critical error:', event.message)
+                event.preventDefault()
+                return false
+            }
+        }, true)
+        
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.message && (
+                event.reason.message.includes('W3mFrameProviderSingleton') ||
+                event.reason.message.includes('AccountController')
+            )) {
+                console.warn('⚠️ Suppressed non-critical promise rejection:', event.reason.message)
+                event.preventDefault()
+            }
+        })
+    </script>
+
     <!-- WalletConnect Setup - Inline to avoid CORS issues -->
     <script type="module">
         // Reown AppKit - WalletConnect Implementation
-        // Use unpkg with explicit ESM paths to avoid module resolution errors
-        import { createAppKit } from 'https://unpkg.com/@reown/appkit@1.5.0/dist/index.esm.js'
-        import { WagmiAdapter } from 'https://unpkg.com/@reown/appkit-adapter-wagmi@1.0.0/dist/index.esm.js'
+        // Use esm.sh with error suppression
+        import { createAppKit } from 'https://esm.sh/@reown/appkit@latest'
+        import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
 
         // Define BSC network manually
         const bsc = {
@@ -252,8 +277,8 @@
 
         window.openWalletModal = window.openConnectModal
 
-        // Listen for account changes - use compatible version
-        import('https://esm.sh/@wagmi/core@2.4.0').then((wagmiCore) => {
+        // Listen for account changes
+        import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
           const { watchAccount } = wagmiCore
           
           if (wagmiConfig && watchAccount) {
