@@ -24,6 +24,85 @@ function checkMetaMaskMobile() {
   return false
 }
 
+// BNB Smart Chain (BSC) Configuration
+const BNB_CHAIN_CONFIG = {
+  chainId: '0x38', // 56 in decimal - BSC Mainnet
+  chainName: 'BNB Smart Chain',
+  nativeCurrency: {
+    name: 'BNB',
+    symbol: 'BNB',
+    decimals: 18
+  },
+  rpcUrls: ['https://bsc-dataseed.binance.org/'],
+  blockExplorerUrls: ['https://bscscan.com/']
+}
+
+// Function to switch to BNB Smart Chain automatically
+async function switchToBNBChain(provider) {
+  try {
+    console.log('🔄 Checking current chain...')
+    
+    // Get current chain ID
+    const currentChainId = await provider.request({ method: 'eth_chainId' })
+    console.log('📋 Current chain ID:', currentChainId)
+    
+    // If already on BNB Chain, no need to switch
+    if (currentChainId === BNB_CHAIN_CONFIG.chainId) {
+      console.log('✅ Already on BNB Smart Chain')
+      return
+    }
+    
+    console.log('🔄 Switching to BNB Smart Chain...')
+    
+    try {
+      // Try to switch to BNB Chain
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: BNB_CHAIN_CONFIG.chainId }]
+      })
+      console.log('✅ Successfully switched to BNB Smart Chain')
+    } catch (switchError) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902 || switchError.code === -32603) {
+        console.log('📋 BNB Chain not found, adding it...')
+        try {
+          // Add BNB Chain to MetaMask
+          await provider.request({
+            method: 'wallet_addEthereumChain',
+            params: [BNB_CHAIN_CONFIG]
+          })
+          console.log('✅ BNB Smart Chain added and switched')
+        } catch (addError) {
+          console.error('❌ Error adding BNB Chain:', addError)
+          // Don't block connection if chain switch fails
+          if (window.showCustomModal) {
+            window.showCustomModal(
+              'Network Switch',
+              'Please manually switch to BNB Smart Chain in MetaMask to use this dApp.',
+              'warning'
+            )
+          }
+        }
+      } else {
+        console.error('❌ Error switching chain:', switchError)
+        // User rejected the switch, don't block connection
+        if (switchError.code !== 4001) { // 4001 = user rejected
+          if (window.showCustomModal) {
+            window.showCustomModal(
+              'Network Switch',
+              'Please switch to BNB Smart Chain in MetaMask to use this dApp.',
+              'info'
+            )
+          }
+        }
+      }
+    }
+} catch (error) {
+    console.error('❌ Error in switchToBNBChain:', error)
+    // Don't block connection if chain detection fails
+  }
+}
+
 // Set up global functions for onclick handlers
 async function connectMetaMask() {
   try {
@@ -72,7 +151,7 @@ async function connectMetaMask() {
           window.showCustomModal('MetaMask Not Found', message, 'warning')
         } else if (window.originalAlert) {
           window.originalAlert('⚠️ ' + message)
-        } else {
+    } else {
           alert('⚠️ ' + message)
         }
       } else {
@@ -112,7 +191,7 @@ async function connectMetaMask() {
         window.showCustomModal('MetaMask Not Detected', message, 'error')
       } else if (window.originalAlert) {
         window.originalAlert(message)
-      } else {
+  } else {
         alert(message)
       }
       return
@@ -144,11 +223,14 @@ async function connectMetaMask() {
     // Prefer ethers if available
     if (typeof ethers !== 'undefined' && ethers?.providers?.Web3Provider) {
       window.provider = new ethers.providers.Web3Provider(providerCandidate)
-      window.signer = window.provider.getSigner()
-    } else {
+              window.signer = window.provider.getSigner()
+            } else {
       window.provider = providerCandidate
       window.signer = providerCandidate
     }
+
+    // Automatically switch to BNB Smart Chain (BSC Mainnet)
+    await switchToBNBChain(providerCandidate)
 
     // Listen for account/network changes
     try {
@@ -168,15 +250,15 @@ async function connectMetaMask() {
     } catch (_) {}
 
     // Dispatch event for any listeners
-    window.dispatchEvent(new CustomEvent('walletConnected', {
-      detail: {
-        account: window.account,
-        provider: window.provider,
-        signer: window.signer
-      }
-    }))
-
-    updateWalletUI()
+            window.dispatchEvent(new CustomEvent('walletConnected', {
+              detail: { 
+                account: window.account, 
+                provider: window.provider, 
+                signer: window.signer 
+              }
+            }))
+            
+            updateWalletUI()
       } catch (error) {
         console.error('Error connecting MetaMask:', error)
         const errorMsg = 'Error connecting MetaMask: ' + (error?.message || String(error))
@@ -197,16 +279,16 @@ window.openConnectModal = () => {
 
 window.openWalletModal = window.openConnectModal
 
-// Show AppKit button once it's ready (after a short delay for web component registration)
-setTimeout(() => {
+// Show AppKit button immediately (no delay to reduce lag)
+(function() {
   const appkitButton = document.getElementById('appkitButton')
   const fallbackButton = document.getElementById('walletConnectBtn')
   
   // Hide AppKit/WalletConnect UI and prefer our MetaMask button
   if (appkitButton) appkitButton.style.display = 'none'
-      if (fallbackButton) fallbackButton.style.display = 'block'
+  if (fallbackButton) fallbackButton.style.display = 'block'
   console.log('✅ Using MetaMask-only connect UI')
-}, 500)
+})()
 
     window.openNetworkModal = () => {
       // Network switching handled by MetaMask directly

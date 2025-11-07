@@ -942,14 +942,12 @@
                 }
             }
             
-            // Try immediately
-            setTimeout(() => tryUpdateDashboard(1), 500)
-            // Try again after 2 seconds
-            setTimeout(() => tryUpdateDashboard(2), 2000)
-            // Try again after 5 seconds
-            setTimeout(() => tryUpdateDashboard(3), 5000)
-            // Try again after 10 seconds (in case app-simple.js loads late)
-            setTimeout(() => tryUpdateDashboard(4), 10000)
+            // Try immediately (no delay to reduce lag)
+            tryUpdateDashboard(1)
+            // Try again after 1 second if needed
+            setTimeout(() => tryUpdateDashboard(2), 1000)
+            // Try again after 2 seconds if still needed
+            setTimeout(() => tryUpdateDashboard(3), 2000)
         })
         
         window.addEventListener('walletDisconnected', () => {
@@ -1366,34 +1364,32 @@
             onload="console.log('✅ ethers.js loaded'); window.ethersLoaded = true;"
             onerror="console.error('❌ Failed to load ethers.js')"></script>
     
-    <!-- Load app-simple.js after a short delay to ensure AppKit is ready -->
-    <script>
-        setTimeout(function() {
-            // Remove any existing app-simple.js script to avoid conflicts
-            const existingScript = document.querySelector('script[src="app-simple.js"]')
-            if (existingScript) {
-                existingScript.remove()
-                console.log('🔄 Removed existing app-simple.js script')
-            }
-            
-            const appScript = document.createElement('script')
-            appScript.src = 'app-simple.js?v=' + Date.now() // Add cache busting
-            appScript.onload = function() {
-                console.log('✅ app-simple.js loaded (with cache bust)')
-                // Make sure updateDashboard is available
-                setTimeout(() => {
+        <!-- Load app-simple.js immediately (no delay to reduce lag) -->
+        <script>
+            (function() {
+                // Remove any existing app-simple.js script to avoid conflicts
+                const existingScript = document.querySelector('script[src="app-simple.js"]')
+                if (existingScript) {
+                    existingScript.remove()
+                    console.log('🔄 Removed existing app-simple.js script')
+                }
+                
+                const appScript = document.createElement('script')
+                appScript.src = 'app-simple.js?v=' + Date.now() // Add cache busting
+                appScript.onload = function() {
+                    console.log('✅ app-simple.js loaded (with cache bust)')
+                    // Check immediately if updateDashboard is available
                     if (window.updateDashboard) {
                         console.log('✅ updateDashboard is available after load')
                     } else {
                         console.warn('⚠️ updateDashboard not available after load')
                     }
-                }, 500)
-            }
-            appScript.onerror = function() {
-                console.error('❌ Failed to load app-simple.js')
-            }
-            document.body.appendChild(appScript)
-        }, 2000) // Wait 2 seconds for AppKit to initialize
-    </script>
+                }
+                appScript.onerror = function() {
+                    console.error('❌ Failed to load app-simple.js')
+                }
+                document.body.appendChild(appScript)
+            })()
+        </script>
 </body>
 </html>
