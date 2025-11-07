@@ -729,6 +729,72 @@
             console.warn('⚠️ File protocol detected - MetaMask will not work!')
         }
         
+        // Calculate tokens based on USDT amount
+        function calculateTokens() {
+            const buyAmountInput = document.getElementById('buyAmount')
+            const tokensPreview = document.getElementById('tokensPreview')
+            const tokensAmount = document.getElementById('tokensAmount')
+            
+            if (!buyAmountInput || !tokensPreview || !tokensAmount) {
+                return
+            }
+            
+            const usdtAmount = parseFloat(buyAmountInput.value) || 0
+            
+            if (usdtAmount > 0) {
+                // Price: $0.0001 per token
+                // So: 1 USDT = 10,000 tokens
+                const tokens = usdtAmount * 10000
+                
+                // Format with commas for readability
+                const tokensFormatted = tokens.toLocaleString('en-US', {
+                    maximumFractionDigits: 0
+                })
+                
+                tokensAmount.textContent = tokensFormatted + ' tokens'
+                tokensPreview.style.display = 'block'
+                
+                console.log(`💰 Calculation: ${usdtAmount} USDT = ${tokensFormatted} tokens (rate: 1 USDT = 10,000 tokens)`)
+            } else {
+                tokensPreview.style.display = 'none'
+            }
+        }
+        
+        // Make calculateTokens globally available
+        window.calculateTokens = calculateTokens
+        
+        // Handle buy tokens button click
+        function handleBuyTokens() {
+            const buyAmountInput = document.getElementById('buyAmount')
+            if (!buyAmountInput) {
+                alert('⚠️ Amount input not found')
+                return
+            }
+            
+            const usdtAmount = parseFloat(buyAmountInput.value)
+            
+            if (!usdtAmount || usdtAmount <= 0) {
+                alert('⚠️ Please enter a valid amount (minimum 0.01 USDT)')
+                return
+            }
+            
+            if (usdtAmount < 0.01) {
+                alert('⚠️ Minimum purchase amount is 0.01 USDT')
+                return
+            }
+            
+            // Call the buyTokens function from app-simple.js
+            if (window.buyTokens && typeof window.buyTokens === 'function') {
+                // Default to USDT payment
+                window.buyTokens(usdtAmount, 'USDT')
+            } else {
+                alert('⚠️ Wallet not connected or buy function not available. Please connect your wallet first.')
+            }
+        }
+        
+        // Make handleBuyTokens globally available
+        window.handleBuyTokens = handleBuyTokens
+        
         // Contract address functions
         function copyContractAddress() {
             const address = '0x45CbCA5f88c510526049F31cECeF626Eb5254784'
