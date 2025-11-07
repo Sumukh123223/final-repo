@@ -14,8 +14,32 @@ async function initAppKit() {
         
         // Import AppKit from CDN (using esm.sh which supports ES modules)
         const { createAppKit } = await import('https://esm.sh/@reown/appkit@latest')
-        const { bsc } = await import('https://esm.sh/@reown/appkit/networks@latest')
         const { WagmiAdapter } = await import('https://esm.sh/@reown/appkit-adapter-wagmi@latest')
+        
+        // Define BSC network manually (since networks import path is problematic)
+        const bsc = {
+            id: 56,
+            name: 'BNB Smart Chain',
+            nativeCurrency: {
+                decimals: 18,
+                name: 'BNB',
+                symbol: 'BNB',
+            },
+            rpcUrls: {
+                default: {
+                    http: ['https://bsc-dataseed1.binance.org'],
+                },
+                public: {
+                    http: ['https://bsc-dataseed1.binance.org'],
+                },
+            },
+            blockExplorers: {
+                default: {
+                    name: 'BscScan',
+                    url: 'https://bscscan.com',
+                },
+            },
+        }
         
         const projectId = '82dc70494a3772c5807c04ceae640981'
         
