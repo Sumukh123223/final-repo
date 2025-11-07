@@ -727,25 +727,50 @@
         window.openWalletModal = function() {
             console.log('🔵 openWalletModal called')
             
-            // Return immediately - try AppKit first, then MetaMask
-            setTimeout(() => {
-                try {
-                    // Try AppKit first if available
-                    if (window.walletModalReady && window.openConnectModal && typeof window.openConnectModal === 'function') {
-                        window.openConnectModal()
-                    } else if (window.modal && typeof window.modal.open === 'function') {
+            // Try AppKit first - wait a bit if not ready
+            const tryOpenAppKit = () => {
+                // Check if AppKit is ready
+                if (window.walletModalReady && window.openConnectModal && typeof window.openConnectModal === 'function') {
+                    console.log('✅ AppKit ready, opening...')
+                    window.openConnectModal()
+                    return true
+                } else if (window.modal && typeof window.modal.open === 'function') {
+                    console.log('✅ AppKit modal exists, opening directly...')
+                    try {
                         window.modal.open()
-                    } else {
-                        // Fallback to direct MetaMask connection
-                        console.log('⚠️ AppKit not ready, using MetaMask fallback')
-                        window.connectMetaMask()
+                        return true
+                    } catch (e) {
+                        console.error('❌ Error opening modal directly:', e)
                     }
-                } catch (error) {
-                    console.error('Error in openWalletModal, using MetaMask fallback:', error)
-                    // Fallback to MetaMask
-                    window.connectMetaMask()
                 }
-            }, 0)
+                return false
+            }
+            
+            // Try immediately
+            if (tryOpenAppKit()) {
+                return false
+            }
+            
+            // If not ready, wait a bit for AppKit to initialize (give it time)
+            console.log('⏳ AppKit not ready, waiting...')
+            let attempts = 0
+            const maxAttempts = 10 // Wait up to 1 second (10 * 100ms)
+            
+            const checkAndOpen = setInterval(() => {
+                attempts++
+                if (tryOpenAppKit()) {
+                    clearInterval(checkAndOpen)
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkAndOpen)
+                    // Only after waiting, use MetaMask as last resort
+                    console.warn('⚠️ AppKit not ready after waiting, using MetaMask as last resort')
+                    if (window.connectMetaMask && typeof window.ethereum !== 'undefined') {
+                        window.connectMetaMask()
+                    } else {
+                        alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
+                    }
+                }
+            }, 100)
             
             // Return false to prevent any default behavior
             return false

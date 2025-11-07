@@ -58,55 +58,88 @@ async function initAppKit() {
         }
         
         // Create the modal
-        const modal = createAppKit({
-            adapters: [wagmiAdapter],
-            networks: [bsc],
-            metadata,
-            projectId,
-            features: {
-                analytics: true,
-                email: false, // Disable email auth to avoid W3mFrameProviderSingleton error
-                socials: false // Disable social auth to avoid W3mFrameProviderSingleton error
-            }
-        })
-        
-        // Get wagmiConfig for contract interactions
-        const wagmiConfig = wagmiAdapter.wagmiConfig
-        
-        // Make modal globally available
-        window.modal = modal
-        window.wagmiConfig = wagmiConfig
-        window.walletModalReady = true
+        console.log('🚀 Creating AppKit modal in appkit-setup.js...')
+        let modal
+        try {
+            modal = createAppKit({
+                adapters: [wagmiAdapter],
+                networks: [bsc],
+                metadata,
+                projectId,
+                features: {
+                    analytics: true,
+                    email: false, // Disable email auth to avoid W3mFrameProviderSingleton error
+                    socials: false // Disable social auth to avoid W3mFrameProviderSingleton error
+                }
+            })
+            
+            console.log('✅ AppKit modal created in appkit-setup.js:', modal)
+            console.log('✅ Modal type:', typeof modal)
+            console.log('✅ Modal.open type:', typeof modal?.open)
+            
+            // Get wagmiConfig for contract interactions
+            const wagmiConfig = wagmiAdapter.wagmiConfig
+            
+            // Make modal globally available
+            window.modal = modal
+            window.wagmiConfig = wagmiConfig
+            window.walletModalReady = true
+            
+            console.log('✅ AppKit initialized in appkit-setup.js and ready!')
+        } catch (error) {
+            console.error('❌ Error creating AppKit modal in appkit-setup.js:', error)
+            console.error('Error details:', error.message, error.stack)
+            // Set modal to null so fallback can work
+            window.modal = null
+            window.walletModalReady = false
+        }
         
         // Set up global functions
         window.openConnectModal = () => {
-            // Try to open AppKit modal, with fallback to MetaMask
+            console.log('🔵 openConnectModal called - AppKit modal')
+            
+            // Force AppKit modal to open - don't fallback immediately
             try {
-                if (modal && typeof modal.open === 'function') {
-                    // Open modal asynchronously without blocking
-                    setTimeout(() => {
-                        try {
-                            modal.open()
-                        } catch (error) {
-                            console.error('AppKit modal failed, using MetaMask fallback:', error)
-                            // Fallback to MetaMask
-                            if (window.connectMetaMask) {
-                                window.connectMetaMask()
-                            }
-                        }
-                    }, 0)
-                } else {
-                    console.warn('AppKit modal not ready, using MetaMask fallback')
-                    // Fallback to MetaMask
-                    if (window.connectMetaMask) {
-                        window.connectMetaMask()
+                if (modal) {
+                    console.log('✅ AppKit modal exists, opening...')
+                    // Open modal directly
+                    if (typeof modal.open === 'function') {
+                        modal.open()
+                        console.log('✅ AppKit modal.open() called')
+                        return
+                    } else {
+                        console.error('❌ modal.open is not a function:', typeof modal.open)
                     }
+                } else {
+                    console.error('❌ AppKit modal is null/undefined')
+                }
+                
+                // Only use MetaMask as last resort after checking AppKit
+                console.warn('⚠️ AppKit modal not available, checking MetaMask as last resort...')
+                if (window.connectMetaMask && typeof window.ethereum !== 'undefined') {
+                    console.log('⚠️ Using MetaMask fallback')
+                    window.connectMetaMask()
+                } else {
+                    alert('⚠️ Wallet connection not ready. Please wait a moment and try again, or install MetaMask.')
                 }
             } catch (error) {
-                console.error('Error in openConnectModal, using MetaMask fallback:', error)
-                // Fallback to MetaMask
-                if (window.connectMetaMask) {
-                    window.connectMetaMask()
+                console.error('❌ Error opening AppKit modal:', error)
+                // Only fallback if it's a critical error
+                if (error.message && !error.message.includes('W3mFrameProviderSingleton')) {
+                    console.warn('⚠️ AppKit error, trying MetaMask fallback')
+                    if (window.connectMetaMask && typeof window.ethereum !== 'undefined') {
+                        window.connectMetaMask()
+                    }
+                } else {
+                    // Module import errors - try to open anyway, AppKit might still work
+                    console.log('⚠️ Module import error detected, but trying to open modal anyway...')
+                    try {
+                        if (modal && typeof modal.open === 'function') {
+                            modal.open()
+                        }
+                    } catch (e) {
+                        console.error('❌ Failed to open modal after error:', e)
+                    }
                 }
             }
         }
