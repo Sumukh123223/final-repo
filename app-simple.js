@@ -208,34 +208,47 @@ async function checkExistingConnection() {
 
 // Setup contract instances
 function setupContracts() {
+    console.log('📋 setupContracts called')
     const signer = window.signer
     if (!signer) {
-        console.warn('⚠️ Cannot setup contracts - no signer available')
-        console.warn('📋 window.signer:', window.signer)
-        return
+        console.error('❌ Cannot setup contracts - no signer available')
+        console.error('📋 window.signer:', window.signer)
+        console.error('📋 window.account:', window.account)
+        console.error('📋 window.provider:', !!window.provider)
+        return false
     }
-    
+
     if (typeof ethers === 'undefined') {
-        console.warn('⚠️ Cannot setup contracts - ethers.js not available')
-        return
+        console.error('❌ Cannot setup contracts - ethers.js not available')
+        return false
     }
-    
+
     console.log('📋 Setting up contract instances...')
     console.log('📋 Contract address:', CONTRACT_ADDRESS)
+    console.log('📋 USDT address:', USDT_ADDRESS)
     console.log('📋 Signer type:', typeof signer)
-    
+    console.log('📋 Signer address:', signer?.getAddress ? 'available' : 'not available')
+
     try {
-    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
-    usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer)
+        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
+        usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer)
         console.log('✅ Contracts set up successfully')
         console.log('✅ Contract instance:', !!contract)
         console.log('✅ USDT Contract instance:', !!usdtContract)
-        console.log('✅ Contract address:', contract.address)
+        if (contract) {
+            console.log('✅ Contract address:', contract.address)
+        }
+        if (usdtContract) {
+            console.log('✅ USDT Contract address:', usdtContract.address)
+        }
+        return true
     } catch (error) {
         console.error('❌ Error setting up contracts:', error)
         console.error('Error details:', error.message)
+        console.error('Error stack:', error.stack)
         contract = null
         usdtContract = null
+        return false
     }
 }
 
@@ -435,23 +448,63 @@ async function updateDashboard() {
 
 // Buy tokens function (called from HTML)
 window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
-        const account = window.account
-        const signer = window.signer
-        if (!account || !signer) {
+    console.log('🛒 buyTokens called with:', { usdtAmount, paymentMethod })
+    
+    const account = window.account
+    const signer = window.signer
+    
+    if (!account || !signer) {
+        console.error('❌ No account or signer:', { account: !!account, signer: !!signer })
+        if (window.showCustomModal) {
+            window.showCustomModal('Wallet Not Connected', 'Please connect your wallet first!', 'warning')
+        } else {
+            alert('Please connect your wallet first!')
+        }
+        return
+    }
+    
+    // Make sure ethers is available
+    if (typeof ethers === 'undefined') {
+        console.error('❌ ethers.js not available')
+        if (window.showCustomModal) {
+            window.showCustomModal('Error', 'ethers.js library is not loaded. Please refresh the page.', 'error')
+        } else {
+            alert('❌ ethers.js library is not loaded. Please refresh the page.')
+        }
+        return
+    }
+    
+    // Setup contracts if not already set up
+    if (!contract || !usdtContract) {
+        console.log('📋 Setting up contracts...')
+        setupContracts()
+        
+        // Wait a bit for contracts to initialize
+        let retries = 0
+        while ((!contract || !usdtContract) && retries < 10) {
+            await new Promise(resolve => setTimeout(resolve, 100))
+            retries++
+        }
+        
+        if (!contract || !usdtContract) {
+            console.error('❌ Failed to setup contracts after retries')
             if (window.showCustomModal) {
-                window.showCustomModal('Wallet Not Connected', 'Please connect your wallet first!', 'warning')
+                window.showCustomModal('Contract Error', 'Failed to initialize contracts. Please refresh the page and try again.', 'error')
             } else {
-                alert('Please connect your wallet first!')
+                alert('❌ Failed to initialize contracts. Please refresh the page.')
             }
-            await window.connectWallet()
             return
         }
-    
-    if (!contract) setupContracts()
+        console.log('✅ Contracts initialized')
+    }
     
     try {
+        console.log('💰 Converting amount to wei...')
         const amountInWei = ethers.utils.parseUnits(usdtAmount.toString(), 18)
+        console.log('💰 Amount in wei:', amountInWei.toString())
+        
         const referrer = getReferrerAddress()
+        console.log('📋 Referrer:', referrer || 'none')
         
         if (paymentMethod === 'BNB') {
             // Buy with BNB
@@ -487,8 +540,24 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
             }
         } else {
             // Buy with USDT
+            console.log('💵 Buying with USDT...')
+            console.log('📋 Checking USDT balance...')
+            
             // Check balance
-            const usdtBalance = await usdtContract.balanceOf(account)
+            let usdtBalance
+            try {
+                usdtBalance = await usdtContract.balanceOf(account)
+                console.log('💰 USDT Balance:', ethers.utils.formatEther(usdtBalance))
+            } catch (error) {
+                console.error('❌ Error checking USDT balance:', error)
+                if (window.showCustomModal) {
+                    window.showCustomModal('Error', 'Failed to check USDT balance: ' + (error.message || 'Unknown error'), 'error')
+                } else {
+                    alert('❌ Error checking USDT balance: ' + (error.message || 'Unknown error'))
+                }
+                return
+            }
+            
             if (usdtBalance.lt(amountInWei)) {
                 const message = `Insufficient USDT balance!\n\nYou have: ${ethers.utils.formatEther(usdtBalance)} USDT\nRequired: ${usdtAmount} USDT`
                 if (window.showCustomModal) {
@@ -500,8 +569,23 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
             }
             
             // Check allowance
-            const allowance = await usdtContract.allowance(account, CONTRACT_ADDRESS)
+            console.log('📋 Checking USDT allowance...')
+            let allowance
+            try {
+                allowance = await usdtContract.allowance(account, CONTRACT_ADDRESS)
+                console.log('✅ Current allowance:', ethers.utils.formatEther(allowance))
+            } catch (error) {
+                console.error('❌ Error checking allowance:', error)
+                if (window.showCustomModal) {
+                    window.showCustomModal('Error', 'Failed to check USDT allowance: ' + (error.message || 'Unknown error'), 'error')
+                } else {
+                    alert('❌ Error checking USDT allowance: ' + (error.message || 'Unknown error'))
+                }
+                return
+            }
+            
             if (allowance.lt(amountInWei)) {
+                console.log('⚠️ Insufficient allowance, requesting approval...')
                 const approveConfirm = await new Promise((resolve) => {
                     if (window.showCustomModal) {
                         window.showCustomModal(
@@ -526,50 +610,94 @@ window.buyTokens = async function(usdtAmount, paymentMethod = 'USDT') {
                 }
                 
                 // Approve USDT
+                console.log('📝 Approving USDT...')
                 const approveAmount = amountInWei.mul(1000) // Approve 1000x
                 if (window.showCustomModal) {
                     window.showCustomModal('Approving USDT', 'Please confirm the approval transaction in your wallet.', 'info')
                 } else {
                     alert('⏳ Approving USDT... Please confirm in your wallet.')
                 }
-                const approveTx = await usdtContract.approve(CONTRACT_ADDRESS, approveAmount)
-                await approveTx.wait()
-                if (window.showCustomModal) {
-                    window.showCustomModal('USDT Approved', 'USDT has been approved! You can now buy tokens.', 'success')
-                } else {
-                    alert('✅ USDT approved! You can now buy tokens.')
+                
+                let approveTx
+                try {
+                    approveTx = await usdtContract.approve(CONTRACT_ADDRESS, approveAmount)
+                    console.log('⏳ Approval transaction submitted:', approveTx.hash)
+                    await approveTx.wait()
+                    console.log('✅ Approval confirmed')
+                    if (window.showCustomModal) {
+                        window.showCustomModal('USDT Approved', 'USDT has been approved! You can now buy tokens.', 'success')
+                    } else {
+                        alert('✅ USDT approved! You can now buy tokens.')
+                    }
+                } catch (error) {
+                    console.error('❌ Approval error:', error)
+                    if (error.message?.includes('user rejected') || error.message?.includes('User denied')) {
+                        if (window.showCustomModal) {
+                            window.showCustomModal('Approval Cancelled', 'USDT approval was cancelled. Purchase cannot proceed without approval.', 'warning')
+                        } else {
+                            alert('❌ Approval cancelled. Purchase cannot proceed.')
+                        }
+                    } else {
+                        if (window.showCustomModal) {
+                            window.showCustomModal('Approval Error', 'Error approving USDT: ' + (error.message || 'Unknown error'), 'error')
+                        } else {
+                            alert('❌ Error approving USDT: ' + (error.message || 'Unknown error'))
+                        }
+                    }
+                    return
                 }
             }
             
             // Buy tokens
-                if (referrer) {
-                    if (window.showCustomModal) {
-                        window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
-                    } else {
-                        alert('⏳ Purchasing tokens... Please confirm in your wallet.')
-                    }
-                    const tx = await contract.buyTokensWithReferral(amountInWei, referrer)
+            console.log('🛒 Purchasing tokens...')
+            if (referrer) {
+                console.log('📋 Using referral:', referrer)
+                if (window.showCustomModal) {
+                    window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
+                } else {
+                    alert('⏳ Purchasing tokens... Please confirm in your wallet.')
+                }
+                
+                let tx
+                try {
+                    tx = await contract.buyTokensWithReferral(amountInWei, referrer)
+                    console.log('⏳ Purchase transaction submitted:', tx.hash)
                     await tx.wait()
+                    console.log('✅ Purchase confirmed')
                     if (window.showCustomModal) {
                         window.showCustomModal('Success!', 'Tokens purchased successfully!', 'success')
                     } else {
                         alert('✅ Tokens purchased successfully!')
                     }
                     localStorage.removeItem('referralAddress')
+                } catch (error) {
+                    console.error('❌ Purchase error:', error)
+                    throw error // Re-throw to be caught by outer catch
+                }
+            } else {
+                console.log('📋 No referrer')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
                 } else {
-                    if (window.showCustomModal) {
-                        window.showCustomModal('Purchasing Tokens', 'Please confirm the transaction in your wallet.', 'info')
-                    } else {
-                        alert('⏳ Purchasing tokens... Please confirm in your wallet.')
-                    }
-                    const tx = await contract.buyTokens(amountInWei)
+                    alert('⏳ Purchasing tokens... Please confirm in your wallet.')
+                }
+                
+                let tx
+                try {
+                    tx = await contract.buyTokens(amountInWei)
+                    console.log('⏳ Purchase transaction submitted:', tx.hash)
                     await tx.wait()
+                    console.log('✅ Purchase confirmed')
                     if (window.showCustomModal) {
                         window.showCustomModal('Success!', 'Tokens purchased successfully!', 'success')
                     } else {
                         alert('✅ Tokens purchased successfully!')
                     }
+                } catch (error) {
+                    console.error('❌ Purchase error:', error)
+                    throw error // Re-throw to be caught by outer catch
                 }
+            }
         }
         
         // Update dashboard - wait longer for blockchain to update
