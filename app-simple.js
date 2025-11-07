@@ -200,10 +200,18 @@ async function checkExistingConnection() {
 // Setup contract instances
 function setupContracts() {
     const signer = window.signer
-    if (!signer) return
+    if (!signer) {
+        console.warn('⚠️ Cannot setup contracts - no signer available')
+        return
+    }
     
+    console.log('📋 Setting up contract instances...')
+    console.log('📋 Contract address:', CONTRACT_ADDRESS)
     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer)
     usdtContract = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer)
+    console.log('✅ Contracts set up successfully')
+    console.log('✅ Contract instance:', !!contract)
+    console.log('✅ USDT Contract instance:', !!usdtContract)
 }
 
 // Update dashboard
@@ -227,9 +235,19 @@ async function updateDashboard() {
     try {
         console.log('🔄 Updating dashboard for account:', account)
         console.log('📋 Contract address:', CONTRACT_ADDRESS)
+        console.log('📋 Contract instance:', !!contract)
+        console.log('📋 Account:', account)
+        
+        if (!contract) {
+            console.error('❌ Contract not initialized!')
+            alert('⚠️ Contract not initialized. Please refresh the page.')
+            return
+        }
         
         // Get balance and rewards
+        console.log('📞 Calling contract.balanceOf...')
         const balance = await contract.balanceOf(account)
+        console.log('📞 Calling contract.calculateRewards...')
         const rewards = await contract.calculateRewards(account)
         
         console.log('📊 Raw balance from contract:', balance.toString())

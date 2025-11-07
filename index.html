@@ -717,6 +717,16 @@
                 window.signer = e.detail.signer
             }
             updateWalletUI()
+            
+            // Also trigger dashboard update directly
+            setTimeout(() => {
+                if (window.updateDashboard && typeof window.updateDashboard === 'function') {
+                    console.log('🔄 Calling updateDashboard directly from index.html...')
+                    window.updateDashboard()
+                } else {
+                    console.warn('⚠️ updateDashboard function not available yet')
+                }
+            }, 1000)
         })
         
         window.addEventListener('walletDisconnected', () => {
