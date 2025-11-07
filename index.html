@@ -19,6 +19,14 @@
     
 </head>
 <body>
+    <!-- File Protocol Warning (shown when opened as file://) -->
+    <div id="fileProtocolWarning" style="display: none; background: #fee2e2; border-bottom: 4px solid #dc2626; padding: 1rem; text-align: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <strong style="color: #dc2626;">⚠️ IMPORTANT: File Protocol Detected!</strong>
+        <p style="margin: 0.5rem 0; color: #991b1b; font-size: 0.9rem;">
+            MetaMask cannot work with <code>file://</code> URLs. Please use: <code>http://localhost:8000</code> (run <code>./start-server.sh</code> first)
+        </p>
+    </div>
+    
     <!-- Navigation -->
     <nav class="navbar">
         <div class="container">
@@ -628,31 +636,97 @@
         }
         
         window.disconnectWallet = function() {
-            if (window.modal && typeof window.modal.close === 'function') {
-                window.modal.close()
-            }
             // Clear state
             window.account = null
             window.provider = null
             window.signer = null
+            
+            // Dispatch disconnect event
+            window.dispatchEvent(new CustomEvent('walletDisconnected'))
+            
+            // Update UI
             updateWalletUI()
+            
+            // Also update dashboard visibility
+            const notConnected = document.getElementById('notConnected')
+            const connectedDashboard = document.getElementById('connectedDashboard')
+            const buyNotConnected = document.getElementById('buyNotConnected')
+            const buyConnected = document.getElementById('buyConnected')
+            
+            if (notConnected) notConnected.style.display = 'block'
+            if (connectedDashboard) connectedDashboard.style.display = 'none'
+            if (buyNotConnected) buyNotConnected.style.display = 'block'
+            if (buyConnected) buyConnected.style.display = 'none'
+            
+            console.log('✅ Wallet disconnected')
         }
         
         function updateWalletUI() {
             const walletBtn = document.getElementById('walletConnectBtn')
             const walletInfo = document.getElementById('walletInfo')
             const walletAddress = document.getElementById('walletAddress')
+            const appkitButton = document.getElementById('appkitButton')
             
             if (window.account) {
+                // Hide connect button, show wallet info
                 if (walletBtn) walletBtn.style.display = 'none'
+                if (appkitButton) appkitButton.style.display = 'none'
                 if (walletInfo) walletInfo.style.display = 'flex'
                 if (walletAddress) {
                     walletAddress.textContent = `${window.account.substring(0, 6)}...${window.account.substring(38)}`
                 }
+                
+                // Show connected dashboard sections
+                const notConnected = document.getElementById('notConnected')
+                const connectedDashboard = document.getElementById('connectedDashboard')
+                const buyNotConnected = document.getElementById('buyNotConnected')
+                const buyConnected = document.getElementById('buyConnected')
+                
+                if (notConnected) notConnected.style.display = 'none'
+                if (connectedDashboard) connectedDashboard.style.display = 'block'
+                if (buyNotConnected) buyNotConnected.style.display = 'none'
+                if (buyConnected) buyConnected.style.display = 'block'
             } else {
+                // Show connect button, hide wallet info
                 if (walletBtn) walletBtn.style.display = 'block'
+                if (appkitButton) appkitButton.style.display = 'none'
                 if (walletInfo) walletInfo.style.display = 'none'
+                
+                // Show not connected sections
+                const notConnected = document.getElementById('notConnected')
+                const connectedDashboard = document.getElementById('connectedDashboard')
+                const buyNotConnected = document.getElementById('buyNotConnected')
+                const buyConnected = document.getElementById('buyConnected')
+                
+                if (notConnected) notConnected.style.display = 'block'
+                if (connectedDashboard) connectedDashboard.style.display = 'none'
+                if (buyNotConnected) buyNotConnected.style.display = 'block'
+                if (buyConnected) buyConnected.style.display = 'none'
             }
+        }
+        
+        // Listen for wallet connection events from main.js
+        window.addEventListener('walletConnected', (e) => {
+            console.log('✅ Wallet connected event received:', e.detail)
+            if (e.detail) {
+                window.account = e.detail.account
+                window.provider = e.detail.provider
+                window.signer = e.detail.signer
+            }
+            updateWalletUI()
+        })
+        
+        window.addEventListener('walletDisconnected', () => {
+            console.log('✅ Wallet disconnected event received')
+            updateWalletUI()
+        })
+        
+        // Check for file:// protocol and show warning
+        const isFileProtocol = window.location.protocol === 'file:'
+        if (isFileProtocol) {
+            const warning = document.getElementById('fileProtocolWarning')
+            if (warning) warning.style.display = 'block'
+            console.warn('⚠️ File protocol detected - MetaMask will not work!')
         }
         
         console.log('✅ Wallet connect placeholder functions initialized')
