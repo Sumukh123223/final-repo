@@ -5,7 +5,8 @@
 // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
 import { createAppKit } from 'https://esm.sh/@reown/appkit@1.8.12'
 import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@1.0.4'
-import { watchAccount } from 'https://esm.sh/@wagmi/core@2.4.11'
+// Import watchAccount dynamically to avoid 404 errors
+let watchAccount = null
 
 // Define BSC network manually (since networks import path is problematic)
 const bsc = {
@@ -168,47 +169,64 @@ window.openNetworkModal = () => {
   }
 }
 
-// Listen for account changes
-watchAccount(wagmiConfig, {
-  onChange(account) {
-    if (account && account.isConnected && account.address) {
-      window.account = account.address
-      
-      // Get provider and signer from wagmi
-      const publicClient = wagmiConfig.getPublicClient()
-      wagmiConfig.getWalletClient().then((walletClient) => {
-        // Create ethers provider/signer from wagmi if ethers is available
-        if (typeof ethers !== 'undefined') {
-          // Convert wagmi client to ethers provider
-          window.provider = new ethers.providers.Web3Provider(walletClient.transport)
-          window.signer = window.provider.getSigner()
-        } else {
-          window.provider = publicClient
-          window.signer = walletClient
-        }
-        
-        // Dispatch event for app-simple.js
-        window.dispatchEvent(new CustomEvent('walletConnected', {
-          detail: { 
-            account: window.account, 
-            provider: window.provider, 
-            signer: window.signer 
+// Listen for account changes - import watchAccount dynamically
+async function setupAccountWatcher() {
+  try {
+    // Try to import watchAccount - use @latest if specific version fails
+    const wagmiModule = await import('https://esm.sh/@wagmi/core@latest')
+    watchAccount = wagmiModule.watchAccount
+    
+    if (watchAccount && wagmiConfig) {
+      watchAccount(wagmiConfig, {
+        onChange(account) {
+          if (account && account.isConnected && account.address) {
+            window.account = account.address
+            
+            // Get provider and signer from wagmi
+            const publicClient = wagmiConfig.getPublicClient()
+            wagmiConfig.getWalletClient().then((walletClient) => {
+              // Create ethers provider/signer from wagmi if ethers is available
+              if (typeof ethers !== 'undefined') {
+                // Convert wagmi client to ethers provider
+                window.provider = new ethers.providers.Web3Provider(walletClient.transport)
+                window.signer = window.provider.getSigner()
+              } else {
+                window.provider = publicClient
+                window.signer = walletClient
+              }
+              
+              // Dispatch event for app-simple.js
+              window.dispatchEvent(new CustomEvent('walletConnected', {
+                detail: { 
+                  account: window.account, 
+                  provider: window.provider, 
+                  signer: window.signer 
+                }
+              }))
+              
+              // Update UI
+              updateWalletUI()
+            }).catch((error) => {
+              console.error('Error getting wallet client:', error)
+            })
+          } else {
+            window.account = null
+            window.provider = null
+            window.signer = null
+            updateWalletUI()
           }
-        }))
-        
-        // Update UI
-        updateWalletUI()
-      }).catch((error) => {
-        console.error('Error getting wallet client:', error)
+        }
       })
-    } else {
-      window.account = null
-      window.provider = null
-      window.signer = null
-      updateWalletUI()
+      console.log('✅ Account watcher set up successfully')
     }
+  } catch (error) {
+    console.warn('⚠️ Could not load watchAccount, wallet connection will still work via modal events:', error)
+    // Wallet connection will still work via modal events, just account watching won't work
   }
-})
+}
+
+// Setup account watcher after a short delay to ensure everything is loaded
+setTimeout(setupAccountWatcher, 1000)
 
 function updateWalletUI() {
   const appkitButton = document.getElementById('appkitButton')

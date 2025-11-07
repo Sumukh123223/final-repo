@@ -135,8 +135,16 @@ async function initAppKit() {
         
         window.openWalletModal = window.openConnectModal
         
-        // Listen for account changes using Wagmi's watchAccount
-        const { watchAccount } = await import('https://esm.sh/@wagmi/core@2.4.11')
+        // Listen for account changes using Wagmi's watchAccount - use @latest
+        let watchAccount
+        try {
+            const wagmiModule = await import('https://esm.sh/@wagmi/core@latest')
+            watchAccount = wagmiModule.watchAccount
+        } catch (error) {
+            console.warn('⚠️ Could not load watchAccount:', error)
+            // Continue without account watching - modal will still work
+            return
+        }
         
         // Watch for account changes
         const unwatch = watchAccount(wagmiConfig, {
