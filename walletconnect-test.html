@@ -221,6 +221,11 @@
         // MetaMask connection function
         async function connectMetaMask() {
           try {
+            console.log('🔵 Attempting to connect MetaMask...')
+            console.log('window.ethereum:', window.ethereum)
+            console.log('window.ethereum?.isMetaMask:', window.ethereum?.isMetaMask)
+            console.log('window.ethereum?.providers:', window.ethereum?.providers)
+            
             const hasEthereum = typeof window !== 'undefined' && typeof window.ethereum !== 'undefined'
             const isMobile = isMobileDevice()
             
@@ -236,23 +241,45 @@
                   'Install MetaMask browser extension'
                 alert(message)
               } else {
-                alert('MetaMask not found. Please install MetaMask browser extension to continue.\n\nGet it at: https://metamask.io/download/')
+                alert('MetaMask not found. Please:\n\n1. Install MetaMask extension\n2. Refresh this page\n3. Make sure MetaMask is unlocked\n\nGet it at: https://metamask.io/download/')
               }
               return
             }
 
-            const providerCandidate = window.ethereum.providers?.find?.(p => p && p.isMetaMask) || window.ethereum
-            if (!providerCandidate || (!providerCandidate.isMetaMask && !window.ethereum.isMetaMask)) {
-              alert('MetaMask provider not detected. Please ensure MetaMask is enabled.')
+            // More flexible provider detection
+            let providerCandidate = null
+            
+            // Check if there are multiple providers (like when multiple wallets are installed)
+            if (window.ethereum.providers && Array.isArray(window.ethereum.providers)) {
+              // Try to find MetaMask in the providers array
+              providerCandidate = window.ethereum.providers.find(p => p && p.isMetaMask)
+              console.log('Found MetaMask in providers array:', providerCandidate)
+            }
+            
+            // If not found in providers, use window.ethereum directly
+            if (!providerCandidate) {
+              providerCandidate = window.ethereum
+              console.log('Using window.ethereum directly:', providerCandidate)
+            }
+            
+            // Even if isMetaMask is not set, try to use it (some versions don't set this flag)
+            if (!providerCandidate) {
+              alert('MetaMask provider not detected. Please:\n\n1. Make sure MetaMask extension is installed and enabled\n2. Refresh this page\n3. Check browser console for errors')
               return
             }
 
-            // Request accounts
+            console.log('Using provider:', providerCandidate)
+            console.log('Provider isMetaMask:', providerCandidate.isMetaMask)
+
+            // Request accounts - this will trigger MetaMask popup
+            console.log('Requesting accounts from MetaMask...')
             const accounts = await providerCandidate.request({ method: 'eth_requestAccounts' })
             if (!accounts || accounts.length === 0) {
-              alert('No accounts returned from MetaMask.')
+              alert('No accounts returned from MetaMask. Please:\n\n1. Make sure you have at least one account in MetaMask\n2. Unlock MetaMask\n3. Try connecting again')
               return
             }
+            
+            console.log('✅ Accounts received:', accounts)
 
             // Set global state
             window.account = accounts[0]
