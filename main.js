@@ -3,33 +3,9 @@
 // Using ES modules from CDN (esm.sh) for vanilla JavaScript without npm/build tools
 
 import { createAppKit } from 'https://esm.sh/@reown/appkit@latest'
+import { bsc } from 'https://esm.sh/@reown/appkit/networks@latest'
 import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
 import { watchAccount } from 'https://esm.sh/@wagmi/core@latest'
-
-// Define BSC network manually (since networks import path is problematic)
-const bsc = {
-  id: 56,
-  name: 'BNB Smart Chain',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'BNB',
-    symbol: 'BNB',
-  },
-  rpcUrls: {
-    default: {
-      http: ['https://bsc-dataseed1.binance.org'],
-    },
-    public: {
-      http: ['https://bsc-dataseed1.binance.org'],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: 'BscScan',
-      url: 'https://bscscan.com',
-    },
-  },
-}
 
 // 1. Get a project ID at https://dashboard.reown.com
 const projectId = '82dc70494a3772c5807c04ceae640981'

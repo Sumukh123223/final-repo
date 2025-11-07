@@ -39,7 +39,7 @@
                     <!-- Official Reown AppKit Button Component -->
                     <appkit-button id="appkitButton" style="display: none;"></appkit-button>
                     <!-- Fallback custom button (shown by default, hidden when AppKit button is ready) -->
-                    <button class="wallet-connect-btn" id="walletConnectBtn" onclick="openWalletModal(); return false;">
+                    <button class="wallet-connect-btn" id="walletConnectBtn" onclick="openWalletModal()">
                         🔷 Connect Wallet
                     </button>
                     <div id="walletInfo" style="display:none; align-items: center; gap: 0.75rem;">
@@ -260,7 +260,7 @@
                     <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
                         Connect your wallet to buy CleanSpark tokens
                     </p>
-                    <button class="btn btn-primary" onclick="openWalletModal(); return false;" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                    <button class="btn btn-primary" onclick="openWalletModal()" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
                         🔷 Connect Wallet
                     </button>
                 </div>
@@ -398,7 +398,7 @@
                     <div>
                         <h3 style="margin-bottom: 0.5rem;">Connect Your Wallet</h3>
                         <p>Connect your wallet to view your mining balance and claim earnings</p>
-                        <button class="btn btn-primary" onclick="openWalletModal(); return false;" style="margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="openWalletModal()" style="margin-top: 1rem;">
                             ₿ Connect Wallet
                         </button>
                     </div>
@@ -613,101 +613,18 @@
     
     <!-- Initialize wallet connect function immediately (before modules load) -->
     <script>
-        // Global error handler to suppress non-critical module loading errors
-        window.addEventListener('error', function(event) {
-            // Suppress W3mFrameProviderSingleton, AccountController and similar module import errors
-            if (event.message && (
-                event.message.includes('W3mFrameProviderSingleton') ||
-                event.message.includes('AccountController') ||
-                event.message.includes('does not provide an export') ||
-                event.message.includes('Failed to fetch dynamically imported module')
-            )) {
-                console.warn('⚠️ Suppressed non-critical module error:', event.message)
-                event.preventDefault()
-                return false
-            }
-        }, true)
-        
-        // Handle unhandled promise rejections from module imports
-        window.addEventListener('unhandledrejection', function(event) {
-            if (event.reason && event.reason.message && (
-                event.reason.message.includes('W3mFrameProviderSingleton') ||
-                event.reason.message.includes('AccountController') ||
-                event.reason.message.includes('does not provide an export')
-            )) {
-                console.warn('⚠️ Suppressed non-critical promise rejection:', event.reason.message)
-                event.preventDefault()
-            }
-        })
-        
-        // Define placeholder function immediately - WalletConnect ONLY
+        // Define placeholder function immediately so onclick handlers work
         window.openWalletModal = function() {
-            console.log('🔵 openWalletModal called - WalletConnect ONLY')
+            console.log('🔵 openWalletModal called')
             
-            // Try WalletConnect AppKit - wait a bit if not ready
-            const tryOpenWalletConnect = () => {
-                // Check if AppKit is ready - try multiple ways
-                if (window.modal && typeof window.modal.open === 'function') {
-                    console.log('✅ WalletConnect modal exists, opening directly...')
-                    try {
-                        window.modal.open()
-                        return true
-                    } catch (e) {
-                        console.error('❌ Error opening WalletConnect modal directly:', e)
-                        // Try again with openConnectModal if available
-                        if (window.openConnectModal && typeof window.openConnectModal === 'function') {
-                            try {
-                                window.openConnectModal()
-                                return true
-                            } catch (e2) {
-                                console.error('❌ Error with openConnectModal:', e2)
-                            }
-                        }
-                    }
-                } else if (window.walletModalReady && window.openConnectModal && typeof window.openConnectModal === 'function') {
-                    console.log('✅ WalletConnect AppKit ready, opening via openConnectModal...')
-                    try {
-                        window.openConnectModal()
-                        return true
-                    } catch (e) {
-                        console.error('❌ Error with openConnectModal:', e)
-                    }
-                }
-                
-                // Debug info
-                console.log('⏳ WalletConnect status:', {
-                    hasModal: !!window.modal,
-                    modalOpenType: typeof window.modal?.open,
-                    walletModalReady: window.walletModalReady,
-                    hasOpenConnectModal: typeof window.openConnectModal
-                })
-                
-                return false
+            // Use official AppKit modal
+            if (window.openConnectModal && typeof window.openConnectModal === 'function' && window.walletModalReady) {
+                window.openConnectModal()
+            } else if (window.modal && typeof window.modal.open === 'function') {
+                window.modal.open()
+            } else {
+                alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
             }
-            
-            // Try immediately
-            if (tryOpenWalletConnect()) {
-                return false
-            }
-            
-            // If not ready, wait for WalletConnect to initialize
-            console.log('⏳ WalletConnect not ready, waiting...')
-            let attempts = 0
-            const maxAttempts = 30 // Wait up to 3 seconds (30 * 100ms) for WalletConnect
-            
-            const checkAndOpen = setInterval(() => {
-                attempts++
-                if (tryOpenWalletConnect()) {
-                    clearInterval(checkAndOpen)
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(checkAndOpen)
-                    // WalletConnect ONLY - no MetaMask fallback
-                    alert('⚠️ WalletConnect is loading... Please wait a moment and try again.\n\nIf this persists, refresh the page and wait for all scripts to load.')
-                }
-            }, 100)
-            
-            // Return false to prevent any default behavior
-            return false
         }
         
         window.disconnectWallet = function() {
@@ -725,34 +642,16 @@
             const walletBtn = document.getElementById('walletConnectBtn')
             const walletInfo = document.getElementById('walletInfo')
             const walletAddress = document.getElementById('walletAddress')
-            const appkitButton = document.getElementById('appkitButton')
-            const notConnected = document.getElementById('notConnected')
-            const connectedDashboard = document.getElementById('connectedDashboard')
-            const buyNotConnected = document.getElementById('buyNotConnected')
-            const buyConnected = document.getElementById('buyConnected')
             
             if (window.account) {
-                // Hide buttons, show wallet info
                 if (walletBtn) walletBtn.style.display = 'none'
-                if (appkitButton) appkitButton.style.display = 'none'
                 if (walletInfo) walletInfo.style.display = 'flex'
                 if (walletAddress) {
                     walletAddress.textContent = `${window.account.substring(0, 6)}...${window.account.substring(38)}`
                 }
-                // Show connected dashboard
-                if (notConnected) notConnected.style.display = 'none'
-                if (connectedDashboard) connectedDashboard.style.display = 'block'
-                if (buyNotConnected) buyNotConnected.style.display = 'none'
-                if (buyConnected) buyConnected.style.display = 'block'
             } else {
-                // Show buttons, hide wallet info
                 if (walletBtn) walletBtn.style.display = 'block'
                 if (walletInfo) walletInfo.style.display = 'none'
-                // Show not connected state
-                if (notConnected) notConnected.style.display = 'block'
-                if (connectedDashboard) connectedDashboard.style.display = 'none'
-                if (buyNotConnected) buyNotConnected.style.display = 'block'
-                if (buyConnected) buyConnected.style.display = 'none'
             }
         }
         
@@ -892,9 +791,14 @@
                 return
             }
             
-            // main.js is already loaded directly, so we don't need appkit-setup.js
-            // Just load app-simple.js after a short delay to ensure AppKit is ready
-            setTimeout(function() {
+            // Load AppKit setup (official Reown AppKit UI)
+            const appkitScript = document.createElement('script')
+            appkitScript.type = 'module'
+            appkitScript.src = 'appkit-setup.js'
+            appkitScript.onload = function() {
+                console.log('✅ appkit-setup.js loaded')
+                
+                // Load app-simple.js after AppKit setup
                 const appScript = document.createElement('script')
                 appScript.src = 'app-simple.js'
                 appScript.onload = function() {
@@ -905,7 +809,16 @@
                     console.error('❌ Failed to load app-simple.js')
                 }
                 document.body.appendChild(appScript)
-            }, 1000) // Wait 1 second for AppKit to initialize
+            }
+            appkitScript.onerror = function() {
+                console.error('❌ Failed to load appkit-setup.js')
+                // Fallback: try loading walletconnect-simple.js
+                console.log('⚠️ Falling back to simple WalletConnect...')
+                const walletScript = document.createElement('script')
+                walletScript.src = 'walletconnect-simple.js'
+                document.body.appendChild(walletScript)
+            }
+            document.body.appendChild(appkitScript)
         }
         
         // Fallback: Load from unpkg if jsDelivr fails
