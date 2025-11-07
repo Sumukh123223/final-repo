@@ -784,7 +784,11 @@
             } else if (window.modal && typeof window.modal.open === 'function') {
                 window.modal.open()
             } else {
-                alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Wallet Loading', 'Wallet connection is loading... Please wait a moment and try again.', 'info')
+                } else {
+                    alert('⚠️ Wallet connection is loading... Please wait a moment and try again.')
+                }
             }
         }
         
@@ -965,19 +969,31 @@
         function handleBuyTokens() {
             const buyAmountInput = document.getElementById('buyAmount')
             if (!buyAmountInput) {
-                alert('⚠️ Amount input not found')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Error', 'Amount input not found', 'error')
+                } else {
+                    alert('⚠️ Amount input not found')
+                }
                 return
             }
             
             const usdtAmount = parseFloat(buyAmountInput.value)
             
             if (!usdtAmount || usdtAmount <= 0) {
-                alert('⚠️ Please enter a valid amount (minimum 0.01 USDT)')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Invalid Amount', 'Please enter a valid amount (minimum 0.01 USDT)', 'warning')
+                } else {
+                    alert('⚠️ Please enter a valid amount (minimum 0.01 USDT)')
+                }
                 return
             }
             
             if (usdtAmount < 0.01) {
-                alert('⚠️ Minimum purchase amount is 0.01 USDT')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Minimum Amount', 'Minimum purchase amount is 0.01 USDT', 'warning')
+                } else {
+                    alert('⚠️ Minimum purchase amount is 0.01 USDT')
+                }
                 return
             }
             
@@ -986,7 +1002,11 @@
                 // Default to USDT payment
                 window.buyTokens(usdtAmount, 'USDT')
             } else {
-                alert('⚠️ Wallet not connected or buy function not available. Please connect your wallet first.')
+                if (window.showCustomModal) {
+                    window.showCustomModal('Wallet Not Connected', 'Wallet not connected or buy function not available. Please connect your wallet first.', 'warning')
+                } else {
+                    alert('⚠️ Wallet not connected or buy function not available. Please connect your wallet first.')
+                }
             }
         }
         
@@ -999,21 +1019,28 @@
                 navigator.clipboard.writeText(address).then(() => {
                     if (window.showCustomModal) {
                         window.showCustomModal('Copied!', 'Contract address copied to clipboard!', 'success')
-                    } else {
-                        alert('✅ Contract address copied to clipboard!')
+                    } else if (window.originalAlert) {
+                        window.originalAlert('✅ Contract address copied to clipboard!')
                     }
                 }).catch(() => {
                     // Fallback for older browsers
-                    const textarea = document.createElement('textarea')
-                    textarea.value = address
-                    document.body.appendChild(textarea)
-                    textarea.select()
-                    document.execCommand('copy')
-                    document.body.removeChild(textarea)
-                    if (window.showCustomModal) {
-                        window.showCustomModal('Copied!', 'Contract address copied to clipboard!', 'success')
-                    } else {
-                        alert('✅ Contract address copied to clipboard!')
+                    try {
+                        const textarea = document.createElement('textarea')
+                        textarea.value = address
+                        document.body.appendChild(textarea)
+                        textarea.select()
+                        document.execCommand('copy')
+                        document.body.removeChild(textarea)
+                        if (window.showCustomModal) {
+                            window.showCustomModal('Copied!', 'Contract address copied to clipboard!', 'success')
+                        } else if (window.originalAlert) {
+                            window.originalAlert('✅ Contract address copied to clipboard!')
+                        }
+                    } catch (err) {
+                        console.error('Failed to copy:', err)
+                        if (window.showCustomModal) {
+                            window.showCustomModal('Copy Failed', 'Failed to copy address. Please copy manually: ' + address, 'error')
+                        }
                     }
                 })
             }
@@ -1040,29 +1067,29 @@
                         if (success) {
                             if (window.showCustomModal) {
                                 window.showCustomModal('Success!', 'CleanSpark token added to MetaMask!', 'success')
-                            } else {
-                                alert('✅ CleanSpark token added to MetaMask!')
+                            } else if (window.originalAlert) {
+                                window.originalAlert('✅ CleanSpark token added to MetaMask!')
                             }
                         } else {
                             if (window.showCustomModal) {
                                 window.showCustomModal('Not Added', 'Token was not added. Please try again.', 'warning')
-                            } else {
-                                alert('⚠️ Token was not added. Please try again.')
+                            } else if (window.originalAlert) {
+                                window.originalAlert('⚠️ Token was not added. Please try again.')
                             }
                         }
                     }).catch((error) => {
                         console.error('Error adding token:', error)
                         if (window.showCustomModal) {
-                            window.showCustomModal('Error', 'Error adding token: ' + error.message, 'error')
-                        } else {
-                            alert('❌ Error adding token: ' + error.message)
+                            window.showCustomModal('Error', 'Error adding token: ' + (error.message || 'Unknown error'), 'error')
+                        } else if (window.originalAlert) {
+                            window.originalAlert('❌ Error adding token: ' + (error.message || 'Unknown error'))
                         }
                     })
                 } else {
                     if (window.showCustomModal) {
                         window.showCustomModal('MetaMask Not Found', 'MetaMask is not installed. Please install MetaMask first.', 'warning')
-                    } else {
-                        alert('⚠️ MetaMask is not installed. Please install MetaMask first.')
+                    } else if (window.originalAlert) {
+                        window.originalAlert('⚠️ MetaMask is not installed. Please install MetaMask first.')
                     }
                 }
         }
@@ -1082,8 +1109,8 @@
                 const trustWalletMessage = 'Adding to Trust Wallet:\n\n1. Click OK to open Trust Wallet\n2. Or manually add token:\n   - Open Trust Wallet\n   - Go to Settings → Wallets\n   - Add Custom Token\n   - Enter contract address:\n   ' + address
                 if (window.showCustomModal) {
                     window.showCustomModal('Add to Trust Wallet', trustWalletMessage, 'info')
-                } else {
-                    alert('📱 ' + trustWalletMessage)
+                } else if (window.originalAlert) {
+                    window.originalAlert('📱 ' + trustWalletMessage)
                 }
         }
         

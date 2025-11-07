@@ -40,31 +40,51 @@ async function connectMetaMask() {
       const isFileProtocol = window.location.protocol === 'file:'
       
       if (isFileProtocol) {
-        alert('⚠️ IMPORTANT: File Protocol Detected!\n\n' +
+        const message = 'IMPORTANT: File Protocol Detected!\n\n' +
           'MetaMask cannot work with file:// URLs for security reasons.\n\n' +
-          '✅ SOLUTION:\n' +
+          'SOLUTION:\n' +
           '1. Open Terminal in this folder\n' +
           '2. Run: ./start-server.sh\n' +
           '   (or: python3 -m http.server 8000)\n' +
           '3. Open browser to: http://localhost:8000\n' +
           '4. Then try connecting again\n\n' +
-          'This will serve the site via HTTP, allowing MetaMask to work.')
+          'This will serve the site via HTTP, allowing MetaMask to work.'
+        if (window.showCustomModal) {
+          window.showCustomModal('File Protocol Detected', message, 'warning')
+        } else if (window.originalAlert) {
+          window.originalAlert('⚠️ ' + message)
+        } else {
+          alert('⚠️ ' + message)
+        }
         return
       }
       
-      if (isMobile) {
-        const message = 'MetaMask not detected!\n\n' +
-          '📱 For Mobile:\n' +
-          '1. Install MetaMask app from App Store/Play Store\n' +
-          '2. Open this site in MetaMask\'s in-app browser\n' +
-          '   (Menu → Browser → Enter URL)\n' +
-          '3. Or use MetaMask\'s "Connect" feature\n\n' +
-          '💻 For Desktop:\n' +
-          'Install MetaMask browser extension'
-        alert(message)
-      } else {
-        alert('MetaMask not found. Please:\n\n1. Install MetaMask extension\n2. Refresh this page\n3. Make sure MetaMask is unlocked\n4. Make sure you\'re using http:// not file://\n\nGet it at: https://metamask.io/download/')
-      }
+          if (isMobile) {
+            const message = 'MetaMask not detected!\n\n' +
+              'For Mobile:\n' +
+              '1. Install MetaMask app from App Store/Play Store\n' +
+              '2. Open this site in MetaMask\'s in-app browser\n' +
+              '   (Menu → Browser → Enter URL)\n' +
+              '3. Or use MetaMask\'s "Connect" feature\n\n' +
+              'For Desktop:\n' +
+              'Install MetaMask browser extension'
+            if (window.showCustomModal) {
+              window.showCustomModal('MetaMask Not Found', message, 'warning')
+            } else if (window.originalAlert) {
+              window.originalAlert('⚠️ ' + message)
+            } else {
+              alert('⚠️ ' + message)
+            }
+          } else {
+            const message = 'MetaMask not found. Please:\n\n1. Install MetaMask extension\n2. Refresh this page\n3. Make sure MetaMask is unlocked\n4. Make sure you\'re using http:// not file://\n\nGet it at: https://metamask.io/download/'
+            if (window.showCustomModal) {
+              window.showCustomModal('MetaMask Not Found', message, 'warning')
+            } else if (window.originalAlert) {
+              window.originalAlert(message)
+            } else {
+              alert(message)
+            }
+          }
       return
     }
 
@@ -84,23 +104,37 @@ async function connectMetaMask() {
       console.log('Using window.ethereum directly:', providerCandidate)
     }
     
-    // Even if isMetaMask is not set, try to use it (some versions don't set this flag)
-    // We'll try to connect anyway and let MetaMask handle it
-    if (!providerCandidate) {
-      alert('MetaMask provider not detected. Please:\n\n1. Make sure MetaMask extension is installed and enabled\n2. Refresh this page\n3. Check browser console for errors')
-      return
-    }
+        // Even if isMetaMask is not set, try to use it (some versions don't set this flag)
+        // We'll try to connect anyway and let MetaMask handle it
+        if (!providerCandidate) {
+          const message = 'MetaMask provider not detected. Please:\n\n1. Make sure MetaMask extension is installed and enabled\n2. Refresh this page\n3. Check browser console for errors'
+          if (window.showCustomModal) {
+            window.showCustomModal('MetaMask Not Detected', message, 'error')
+          } else if (window.originalAlert) {
+            window.originalAlert(message)
+          } else {
+            alert(message)
+          }
+          return
+        }
 
     console.log('Using provider:', providerCandidate)
     console.log('Provider isMetaMask:', providerCandidate.isMetaMask)
 
     // Request accounts - this will trigger MetaMask popup
     console.log('Requesting accounts from MetaMask...')
-    const accounts = await providerCandidate.request({ method: 'eth_requestAccounts' })
-    if (!accounts || accounts.length === 0) {
-      alert('No accounts returned from MetaMask. Please:\n\n1. Make sure you have at least one account in MetaMask\n2. Unlock MetaMask\n3. Try connecting again')
-      return
-    }
+        const accounts = await providerCandidate.request({ method: 'eth_requestAccounts' })
+        if (!accounts || accounts.length === 0) {
+          const message = 'No accounts returned from MetaMask. Please:\n\n1. Make sure you have at least one account in MetaMask\n2. Unlock MetaMask\n3. Try connecting again'
+          if (window.showCustomModal) {
+            window.showCustomModal('No Accounts', message, 'warning')
+          } else if (window.originalAlert) {
+            window.originalAlert(message)
+          } else {
+            alert(message)
+          }
+          return
+        }
     
     console.log('✅ Accounts received:', accounts)
 
@@ -143,10 +177,17 @@ async function connectMetaMask() {
     }))
 
     updateWalletUI()
-  } catch (error) {
-    console.error('Error connecting MetaMask:', error)
-    alert('Error connecting MetaMask: ' + (error?.message || String(error)))
-  }
+      } catch (error) {
+        console.error('Error connecting MetaMask:', error)
+        const errorMsg = 'Error connecting MetaMask: ' + (error?.message || String(error))
+        if (window.showCustomModal) {
+          window.showCustomModal('Connection Error', errorMsg, 'error')
+        } else if (window.originalAlert) {
+          window.originalAlert(errorMsg)
+        } else {
+          alert(errorMsg)
+        }
+      }
 }
 
 window.openConnectModal = () => {
@@ -160,17 +201,24 @@ window.openWalletModal = window.openConnectModal
 setTimeout(() => {
   const appkitButton = document.getElementById('appkitButton')
   const fallbackButton = document.getElementById('walletConnectBtn')
-
+  
   // Hide AppKit/WalletConnect UI and prefer our MetaMask button
   if (appkitButton) appkitButton.style.display = 'none'
-  if (fallbackButton) fallbackButton.style.display = 'block'
+      if (fallbackButton) fallbackButton.style.display = 'block'
   console.log('✅ Using MetaMask-only connect UI')
 }, 500)
 
-window.openNetworkModal = () => {
-  // Network switching handled by MetaMask directly
-  alert('Please switch networks using MetaMask extension')
-}
+    window.openNetworkModal = () => {
+      // Network switching handled by MetaMask directly
+      const message = 'Please switch networks using MetaMask extension'
+      if (window.showCustomModal) {
+        window.showCustomModal('Switch Network', message, 'info')
+      } else if (window.originalAlert) {
+        window.originalAlert(message)
+      } else {
+        alert(message)
+      }
+    }
 
 function updateWalletUI() {
   const appkitButton = document.getElementById('appkitButton')
