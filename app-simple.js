@@ -270,34 +270,65 @@ async function updateDashboard() {
             return
         }
         
-        // Get balance and rewards
-        console.log('📞 Calling contract.balanceOf with account:', account)
-        const balance = await contract.balanceOf(account)
-        console.log('✅ balanceOf call successful')
-        console.log('📞 Calling contract.calculateRewards with account:', account)
-        const rewards = await contract.calculateRewards(account)
-        console.log('✅ calculateRewards call successful')
-        
-        console.log('📊 Raw balance from contract:', balance.toString())
-        console.log('📊 Raw rewards from contract:', rewards.toString())
-        
-        // Try to get locked amount if getUserHoldings exists
+        // Try to get user holdings first (more complete data)
+        let balance = ethers.BigNumber.from(0)
+        let rewards = ethers.BigNumber.from(0)
         let lockedAmount = ethers.BigNumber.from(0)
         let lockStatus = 'All unlocked'
+        let totalBalance = ethers.BigNumber.from(0)
+        
         try {
+            console.log('📞 Calling contract.getUserHoldings with account:', account)
             const holdings = await contract.getUserHoldings(account)
+            console.log('✅ getUserHoldings call successful')
+            console.log('📊 Holdings result:', holdings)
+            
             if (holdings && holdings.length >= 6) {
                 lockedAmount = holdings[0] // lockedAmount
+                rewards = holdings[1] // earnedRewards
+                totalBalance = holdings[2] // totalBalance
+                const pendingRewards = holdings[3] // pendingRewards
+                const lockEnd = holdings[4] // lockEnd
                 const isLocked = holdings[5] // isLocked
+                
+                // Use totalBalance as the main balance (includes locked + unlocked)
+                balance = totalBalance
+                
+                // Use pendingRewards if available, otherwise use earnedRewards
+                if (pendingRewards && pendingRewards.gt(0)) {
+                    rewards = pendingRewards
+                }
+                
                 if (isLocked) {
-                    const lockEnd = holdings[4] // lockEnd
                     const lockEndDate = new Date(lockEnd.toNumber() * 1000)
                     lockStatus = `Locked until ${lockEndDate.toLocaleString()}`
                 }
+                
+                console.log('📊 Parsed holdings:', {
+                    lockedAmount: lockedAmount.toString(),
+                    rewards: rewards.toString(),
+                    totalBalance: totalBalance.toString(),
+                    isLocked: isLocked
+                })
             }
         } catch (e) {
-            console.log('getUserHoldings not available or failed:', e.message)
+            console.log('⚠️ getUserHoldings not available or failed:', e.message)
+            console.log('📞 Falling back to balanceOf and calculateRewards...')
+            
+            // Fallback to individual calls
+            console.log('📞 Calling contract.balanceOf with account:', account)
+            balance = await contract.balanceOf(account)
+            console.log('✅ balanceOf call successful')
+            console.log('📞 Calling contract.calculateRewards with account:', account)
+            rewards = await contract.calculateRewards(account)
+            console.log('✅ calculateRewards call successful')
         }
+        
+        console.log('📊 Final values:', {
+            balance: balance.toString(),
+            rewards: rewards.toString(),
+            locked: lockedAmount.toString()
+        })
         
         // Format values
         const balanceFormatted = parseFloat(ethers.utils.formatEther(balance)).toFixed(4)
