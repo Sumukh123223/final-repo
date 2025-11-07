@@ -642,14 +642,16 @@
     
     <!-- Initialize Custom Modal System FIRST (before everything else) -->
     <script>
-        // Custom Modal Functions - Initialize IMMEDIATELY
+        // Custom Modal Functions - Initialize IMMEDIATELY when DOM is ready
         (function() {
-            function showCustomModal(title, message, type = 'info', onConfirm = null, showCancel = false) {
-                const modal = document.getElementById('customModal')
-                if (!modal) {
-                    // Fallback to native alert if modal doesn't exist yet
-                    return window.originalAlert ? window.originalAlert(message) : alert(message)
-                }
+            function initModalSystem() {
+                function showCustomModal(title, message, type = 'info', onConfirm = null, showCancel = false) {
+                    const modal = document.getElementById('customModal')
+                    if (!modal) {
+                        // Fallback to native alert if modal doesn't exist yet
+                        console.warn('⚠️ Modal element not found, using native alert')
+                        return window.originalAlert ? window.originalAlert(message) : alert(message)
+                    }
                 
                 const modalTitle = document.getElementById('modalTitle')
                 const modalMessage = document.getElementById('modalMessage')
@@ -750,12 +752,47 @@
                 })
             }
             
-            // Make functions globally available
-            window.showCustomModal = showCustomModal
-            window.closeCustomModal = closeCustomModal
-            
-            console.log('✅ Custom modal system initialized')
-        })();
+                    // Make functions globally available
+                    window.showCustomModal = showCustomModal
+                    window.closeCustomModal = closeCustomModal
+                    
+                    // Store original functions
+                    window.originalAlert = window.alert
+                    window.originalConfirm = window.confirm
+                    
+                    // Override alert and confirm IMMEDIATELY
+                    window.alert = function(message) {
+                        // Determine type from message
+                        let type = 'info'
+                        if (message.includes('✅') || message.includes('Success') || message.includes('successfully')) type = 'success'
+                        else if (message.includes('❌') || message.includes('Error') || message.includes('error')) type = 'error'
+                        else if (message.includes('⚠️') || message.includes('Warning') || message.includes('warning')) type = 'warning'
+                        
+                        // Remove emoji from title
+                        const cleanMessage = message.replace(/[✅❌⚠️ℹ️]/g, '').trim()
+                        const title = type === 'success' ? 'Success' : type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : 'Notification'
+                        
+                        showCustomModal(title, cleanMessage, type)
+                    }
+                    
+                    window.confirm = function(message) {
+                        return new Promise((resolve) => {
+                            const cleanMessage = message.replace(/[✅❌⚠️ℹ️]/g, '').trim()
+                            showCustomModal('Confirm', cleanMessage, 'warning', resolve, true)
+                        })
+                    }
+                    
+                    console.log('✅ Custom modal system initialized and alert/confirm overridden')
+                }
+                
+                // Initialize when DOM is ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initModalSystem)
+                } else {
+                    // DOM already loaded
+                    initModalSystem()
+                }
+            })();
     </script>
     
     <!-- Initialize wallet connect function immediately (before modules load) -->
