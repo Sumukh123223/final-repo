@@ -63,6 +63,7 @@ try {
   console.log('🚀 Networks:', [bsc])
   console.log('🚀 Project ID:', projectId)
   
+  // Wrap in try-catch to handle AccountController and other module errors gracefully
   modal = createAppKit({
     adapters: [wagmiAdapter],
     networks: [bsc],
@@ -78,7 +79,13 @@ try {
   console.log('✅ AppKit modal created:', modal)
   console.log('✅ Modal type:', typeof modal)
   console.log('✅ Modal.open type:', typeof modal?.open)
-  console.log('✅ Modal methods:', Object.keys(modal || {}))
+  
+  // Check if modal has open method
+  if (modal && typeof modal.open === 'function') {
+    console.log('✅ Modal.open() is available')
+  } else {
+    console.warn('⚠️ Modal.open() is not available, but modal exists:', modal)
+  }
   
   // 5. Get wagmiConfig for contract interactions
   wagmiConfig = wagmiAdapter.wagmiConfig
@@ -91,13 +98,21 @@ try {
   console.log('✅ AppKit initialized and ready!')
   console.log('✅ window.modal set:', !!window.modal)
   console.log('✅ window.walletModalReady:', window.walletModalReady)
+  console.log('✅ window.openConnectModal available:', typeof window.openConnectModal)
 } catch (error) {
   console.error('❌ Error creating AppKit modal:', error)
   console.error('Error details:', error.message, error.stack)
-  // Even if there's an error, try to set what we can
-  window.modal = modal || null
-  window.walletModalReady = false
-  console.error('❌ AppKit initialization failed - WalletConnect will not work')
+  
+  // Even if there's an error, check if modal was partially created
+  if (modal) {
+    console.log('⚠️ Modal was partially created, trying to use it anyway')
+    window.modal = modal
+    window.walletModalReady = true
+  } else {
+    window.modal = null
+    window.walletModalReady = false
+    console.error('❌ AppKit initialization failed - WalletConnect will not work')
+  }
 }
 
 export { modal, wagmiConfig }
