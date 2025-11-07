@@ -421,7 +421,8 @@ async function updateDashboard() {
         console.log('📊 Dashboard data:', {
             balance: balanceFormatted,
             rewards: rewardsFormatted,
-            locked: lockedFormatted
+            lastBuyTime: lastBuyTimeFormatted,
+            nextRewardTime: nextRewardTimeFormatted
         })
         
         // Update elements - check for both possible IDs
