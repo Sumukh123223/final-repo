@@ -18,15 +18,15 @@ try {
   console.log('📦 Starting AppKit initialization...')
   
   // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
-  // Try version 1.6.3 which should be more stable
-  console.log('📦 Importing createAppKit from esm.sh...')
-  const appkitModule = await import('https://esm.sh/@reown/appkit@1.6.3')
+  // Try using skypack CDN instead of esm.sh - it handles dependencies better
+  console.log('📦 Importing createAppKit from skypack...')
+  const appkitModule = await import('https://cdn.skypack.dev/@reown/appkit@1.6.3')
   const { createAppKit } = appkitModule
   console.log('✅ createAppKit imported:', typeof createAppKit)
   
-  console.log('📦 Importing WagmiAdapter from esm.sh...')
+  console.log('📦 Importing WagmiAdapter from skypack...')
   // Pin WagmiAdapter to a version compatible with AppKit 1.6.3
-  const adapterModule = await import('https://esm.sh/@reown/appkit-adapter-wagmi@1.0.3')
+  const adapterModule = await import('https://cdn.skypack.dev/@reown/appkit-adapter-wagmi@1.0.3')
   const { WagmiAdapter } = adapterModule
   console.log('✅ WagmiAdapter imported:', typeof WagmiAdapter)
   
