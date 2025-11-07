@@ -958,14 +958,9 @@
                 return
             }
             
-            // Load AppKit setup (official Reown AppKit UI)
-            const appkitScript = document.createElement('script')
-            appkitScript.type = 'module'
-            appkitScript.src = 'appkit-setup.js'
-            appkitScript.onload = function() {
-                console.log('✅ appkit-setup.js loaded')
-                
-                // Load app-simple.js after AppKit setup
+            // main.js is already loaded directly, so we don't need appkit-setup.js
+            // Just load app-simple.js after a short delay to ensure AppKit is ready
+            setTimeout(function() {
                 const appScript = document.createElement('script')
                 appScript.src = 'app-simple.js'
                 appScript.onload = function() {
@@ -976,16 +971,7 @@
                     console.error('❌ Failed to load app-simple.js')
                 }
                 document.body.appendChild(appScript)
-            }
-            appkitScript.onerror = function() {
-                console.error('❌ Failed to load appkit-setup.js')
-                // Fallback: try loading walletconnect-simple.js
-                console.log('⚠️ Falling back to simple WalletConnect...')
-                const walletScript = document.createElement('script')
-                walletScript.src = 'walletconnect-simple.js'
-                document.body.appendChild(walletScript)
-            }
-            document.body.appendChild(appkitScript)
+            }, 1000) // Wait 1 second for AppKit to initialize
         }
         
         // Fallback: Load from unpkg if jsDelivr fails
