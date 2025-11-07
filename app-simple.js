@@ -66,24 +66,46 @@ function initApp() {
     
     // Listen for wallet connection events
     window.addEventListener('walletConnected', (e) => {
+        console.log('✅ Wallet connected event received in app-simple.js')
         // Use window variables to avoid conflicts
         window.account = e.detail.account
         window.provider = e.detail.provider
         window.signer = e.detail.signer
         setupContracts()
-        updateDashboard()
+        // Wait a bit for contracts to initialize, then update dashboard
+        setTimeout(() => {
+            updateDashboard()
+        }, 500)
     })
+    
+    // Also listen for existing connection
+    if (window.account && window.signer) {
+        console.log('✅ Existing wallet connection detected, setting up...')
+        setupContracts()
+        setTimeout(() => {
+            updateDashboard()
+        }, 1000)
+    }
 }
 
 // Setup button handlers
 function setupButtons() {
     // Claim rewards button
-    const claimBtn = document.getElementById('claimRewardsBtn')
+    const claimBtn = document.getElementById('claimBtn') || document.getElementById('claimRewardsBtn')
     if (claimBtn) {
         claimBtn.onclick = () => claimRewards()
     }
     
     // Buy tokens button handlers are in HTML onclick
+    
+    // Add refresh button if needed
+    const refreshBtn = document.getElementById('refreshDashboard')
+    if (refreshBtn) {
+        refreshBtn.onclick = () => {
+            console.log('🔄 Manual dashboard refresh triggered')
+            updateDashboard()
+        }
+    }
 }
 
 // Check if wallet is already connected
@@ -107,23 +129,77 @@ function setupContracts() {
 // Update dashboard
 async function updateDashboard() {
     const account = window.account
-    if (!account || !contract) return
+    if (!account || !contract) {
+        console.log('⚠️ Cannot update dashboard - account or contract missing', { account: !!account, contract: !!contract })
+        return
+    }
     
     try {
+        console.log('🔄 Updating dashboard for account:', account)
+        
+        // Get balance and rewards
         const balance = await contract.balanceOf(account)
         const rewards = await contract.calculateRewards(account)
         
-        const balanceEl = document.getElementById('tokenBalance')
+        // Try to get locked amount if getUserHoldings exists
+        let lockedAmount = ethers.BigNumber.from(0)
+        let lockStatus = 'All unlocked'
+        try {
+            const holdings = await contract.getUserHoldings(account)
+            if (holdings && holdings.length >= 6) {
+                lockedAmount = holdings[0] // lockedAmount
+                const isLocked = holdings[5] // isLocked
+                if (isLocked) {
+                    const lockEnd = holdings[4] // lockEnd
+                    const lockEndDate = new Date(lockEnd.toNumber() * 1000)
+                    lockStatus = `Locked until ${lockEndDate.toLocaleString()}`
+                }
+            }
+        } catch (e) {
+            console.log('getUserHoldings not available or failed:', e.message)
+        }
+        
+        // Format values
+        const balanceFormatted = parseFloat(ethers.utils.formatEther(balance)).toFixed(4)
+        const rewardsFormatted = parseFloat(ethers.utils.formatEther(rewards)).toFixed(4)
+        const lockedFormatted = parseFloat(ethers.utils.formatEther(lockedAmount)).toFixed(4)
+        
+        console.log('📊 Dashboard data:', {
+            balance: balanceFormatted,
+            rewards: rewardsFormatted,
+            locked: lockedFormatted
+        })
+        
+        // Update elements - check for both possible IDs
+        const balanceEl = document.getElementById('userBalance') || document.getElementById('tokenBalance')
         const rewardsEl = document.getElementById('pendingRewards')
+        const lockedEl = document.getElementById('lockedAmount')
+        const lockStatusEl = document.getElementById('lockStatus')
         
         if (balanceEl) {
-            balanceEl.textContent = parseFloat(ethers.utils.formatEther(balance)).toFixed(4)
-        }
-        if (rewardsEl) {
-            rewardsEl.textContent = parseFloat(ethers.utils.formatEther(rewards)).toFixed(4)
+            balanceEl.textContent = balanceFormatted + ' cleanSpark'
+            console.log('✅ Updated userBalance:', balanceFormatted)
+        } else {
+            console.warn('⚠️ userBalance element not found')
         }
         
-        // Update UI
+        if (rewardsEl) {
+            rewardsEl.textContent = rewardsFormatted + ' cleanSpark'
+            console.log('✅ Updated pendingRewards:', rewardsFormatted)
+        } else {
+            console.warn('⚠️ pendingRewards element not found')
+        }
+        
+        if (lockedEl) {
+            lockedEl.textContent = lockedFormatted + ' cleanSpark'
+            console.log('✅ Updated lockedAmount:', lockedFormatted)
+        }
+        
+        if (lockStatusEl) {
+            lockStatusEl.textContent = lockStatus
+        }
+        
+        // Update UI visibility
         const walletBtn = document.getElementById('walletConnectBtn')
         const walletInfo = document.getElementById('walletInfo')
         const walletAddress = document.getElementById('walletAddress')
@@ -136,8 +212,16 @@ async function updateDashboard() {
         if (notConnected) notConnected.style.display = 'none'
         if (connectedDashboard) connectedDashboard.style.display = 'block'
         
+        console.log('✅ Dashboard updated successfully')
+        
     } catch (error) {
-        console.error('Dashboard update error:', error)
+        console.error('❌ Dashboard update error:', error)
+        console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            data: error.data
+        })
+        alert('⚠️ Error loading dashboard: ' + (error.reason || error.message || 'Unknown error'))
     }
 }
 
@@ -302,6 +386,42 @@ function setupReferralSystem() {
 // Make functions globally available
 window.updateDashboard = updateDashboard
 window.claimRewards = claimRewards
+
+// Auto-refresh dashboard every 30 seconds if connected
+let dashboardRefreshInterval = null
+function startAutoRefresh() {
+    if (dashboardRefreshInterval) {
+        clearInterval(dashboardRefreshInterval)
+    }
+    dashboardRefreshInterval = setInterval(() => {
+        if (window.account && contract) {
+            console.log('🔄 Auto-refreshing dashboard...')
+            updateDashboard()
+        }
+    }, 30000) // Refresh every 30 seconds
+}
+
+// Start auto-refresh if already connected
+if (window.account) {
+    setTimeout(() => {
+        startAutoRefresh()
+    }, 2000)
+}
+
+// Listen for wallet connection to start auto-refresh
+window.addEventListener('walletConnected', () => {
+    setTimeout(() => {
+        startAutoRefresh()
+    }, 2000)
+})
+
+// Stop auto-refresh on disconnect
+window.addEventListener('walletDisconnected', () => {
+    if (dashboardRefreshInterval) {
+        clearInterval(dashboardRefreshInterval)
+        dashboardRefreshInterval = null
+    }
+})
 
 console.log('✅ App Simple loaded - waiting for ethers.js')
 
