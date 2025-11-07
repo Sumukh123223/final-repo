@@ -139,8 +139,8 @@ import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
   if (wagmiConfig && watchAccount) {
     watchAccount(wagmiConfig, {
       onChange(account) {
-    if (account && account.isConnected && account.address) {
-        window.account = account.address
+        if (account && account.isConnected && account.address) {
+          window.account = account.address
         
         // Get provider and signer from wagmi
         const publicClient = wagmiConfig.getPublicClient()
@@ -169,13 +169,13 @@ import('https://esm.sh/@wagmi/core@latest').then((wagmiCore) => {
         }).catch((error) => {
           console.error('Error getting wallet client:', error)
         })
-      } else {
-        window.account = null
-        window.provider = null
-        window.signer = null
-        updateWalletUI()
+        } else {
+          window.account = null
+          window.provider = null
+          window.signer = null
+          updateWalletUI()
+        }
       }
-    }
   })
   }).catch((error) => {
     console.warn('⚠️ Could not load watchAccount:', error)
