@@ -2,32 +2,17 @@
 // Following official guide: https://docs.reown.com/appkit/javascript/core/installation
 // Using ES modules from CDN (esm.sh) for vanilla JavaScript without npm/build tools
 
-// Wrap everything in try-catch to handle module loading errors
-try {
-  console.log('📦 main.js module loading started...')
+console.log('📦 main.js module loading started...')
 
-  // Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
-  console.log('📦 Importing createAppKit...')
-  const { createAppKit } = await import('https://esm.sh/@reown/appkit@1.8.12')
-  console.log('✅ createAppKit imported')
+// Use pinned versions to avoid breaking changes and W3mFrameProviderSingleton errors
+console.log('📦 Importing createAppKit...')
+import { createAppKit } from 'https://esm.sh/@reown/appkit@1.8.12'
 
-  console.log('📦 Importing WagmiAdapter...')
-  // Try using @latest for WagmiAdapter to avoid @wagmi/core version conflicts
-  const { WagmiAdapter } = await import('https://esm.sh/@reown/appkit-adapter-wagmi@latest')
-  console.log('✅ WagmiAdapter imported')
+console.log('📦 Importing WagmiAdapter...')
+// Try using @latest for WagmiAdapter to avoid @wagmi/core version conflicts
+import { WagmiAdapter } from 'https://esm.sh/@reown/appkit-adapter-wagmi@latest'
 
-  console.log('✅ All imports loaded successfully')
-  
-  // Continue with initialization...
-  initializeAppKit(createAppKit, WagmiAdapter)
-} catch (error) {
-  console.error('❌ CRITICAL: Failed to load main.js module:', error)
-  console.error('Error details:', error.message, error.stack)
-  window.modal = null
-  window.walletModalReady = false
-}
-
-async function initializeAppKit(createAppKit, WagmiAdapter) {
+console.log('✅ All imports loaded successfully')
 // Import watchAccount dynamically to avoid 404 errors
 let watchAccount = null
 
@@ -59,7 +44,8 @@ const bsc = {
 // 1. Get a project ID at https://dashboard.reown.com
 const projectId = '82dc70494a3772c5807c04ceae640981'
 
-export const networks = [bsc]
+// Export networks (removed export to avoid syntax errors - not needed externally)
+const networks = [bsc]
 
 // 2. Set up Wagmi adapter
 console.log('🔧 Creating WagmiAdapter...')
@@ -139,7 +125,8 @@ try {
   }
 }
 
-export { modal, wagmiConfig }
+// Export removed - using window variables instead to avoid module export issues
+// export { modal, wagmiConfig }
 
 // Set up global functions for onclick handlers - WalletConnect ONLY
 window.openConnectModal = () => {

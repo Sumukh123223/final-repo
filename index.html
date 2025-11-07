@@ -952,21 +952,8 @@
     </script>
     
     <!-- Load AppKit Setup (Official Reown AppKit UI with wallet list, search, email/Google) -->
-    <!-- Cache busting: Add ?v=5 to force reload after fixes -->
-    <script type="module">
-        console.log('🔵 Starting to load main.js module...')
-        import('./main.js?v=5')
-            .then(() => {
-                console.log('✅ main.js module loaded successfully')
-            })
-            .catch((error) => {
-                console.error('❌ CRITICAL: Failed to load main.js module:', error)
-                console.error('Error details:', error.message, error.stack)
-                console.error('This means WalletConnect will not work!')
-                window.modal = null
-                window.walletModalReady = false
-            })
-    </script>
+    <!-- Simple static import - cache busting with timestamp -->
+    <script type="module" src="main.js?v=6"></script>
     
     <!-- Load ethers.js for contract interactions -->
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js" 
